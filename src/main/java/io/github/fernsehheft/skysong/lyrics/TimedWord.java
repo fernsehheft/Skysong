@@ -1,13 +1,10 @@
-package io.github.fernsehheft.skysong.render;
-
-import io.github.fernsehheft.skysong.lyrics.LyricLine;
-import io.github.fernsehheft.skysong.lyrics.LyricWord;
+package io.github.fernsehheft.skysong.lyrics;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /** A word of a line together with the moment it's sung. */
-record TimedWord(String text, long startMs) {
+public record TimedWord(String text, long startMs) {
     /** Share of a line's time that is spent singing; the rest is the pause after it. */
     private static final double SUNG_SHARE = 0.8;
     /** Nobody sings a single word for longer than this, even in a slow song. */
@@ -19,7 +16,7 @@ record TimedWord(String text, long startMs) {
      *
      * @param endMs when the line is over, usually where the next one starts
      */
-    static List<TimedWord> of(LyricLine line, long endMs) {
+    public static List<TimedWord> of(LyricLine line, long endMs) {
         if (!line.words().isEmpty()) {
             List<TimedWord> words = new ArrayList<>(line.words().size());
             for (LyricWord word : line.words()) {

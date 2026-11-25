@@ -28,7 +28,7 @@ public final class LyricsService {
 
     /**
      * @param lyrics only set when the status is {@link Status#FOUND}
-     * @param source where the lyrics came from, for showing to the player
+     * @param source where the lyrics came from, a short name for showing to the player
      */
     public record State(NowPlaying track, Status status, Lyrics lyrics, String source) {
         static final State IDLE = new State(null, Status.IDLE, null, null);
@@ -74,14 +74,14 @@ public final class LyricsService {
             return;
         }
         if (DemoSource.isDemo(track)) {
-            publish(track, LyricsText.synced(DemoSource.LYRICS), "the demo song");
+            publish(track, LyricsText.synced(DemoSource.LYRICS), "Demo");
             return;
         }
         TrackQuery query = TrackQuery.of(track);
         try {
             Optional<LyricsText> own = localFolder.find(query);
             if (own.isPresent()) {
-                publish(track, own.get(), "your lyrics folder");
+                publish(track, own.get(), "Your file");
                 return;
             }
 

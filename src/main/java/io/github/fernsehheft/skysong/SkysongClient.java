@@ -2,10 +2,12 @@ package io.github.fernsehheft.skysong;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import io.github.fernsehheft.skysong.config.SkysongConfig;
-import io.github.fernsehheft.skysong.hud.NowPlayingOverlay;
+import io.github.fernsehheft.skysong.hud.HudEditScreen;
+import io.github.fernsehheft.skysong.hud.SkysongHud;
 import io.github.fernsehheft.skysong.lyrics.LocalLyricsFolder;
 import io.github.fernsehheft.skysong.lyrics.LrclibClient;
 import io.github.fernsehheft.skysong.lyrics.LyricsCache;
+import io.github.fernsehheft.skysong.lyrics.LyricsPlayback;
 import io.github.fernsehheft.skysong.lyrics.LyricsService;
 import io.github.fernsehheft.skysong.media.DemoSource;
 import io.github.fernsehheft.skysong.media.MediaSource;
@@ -26,6 +28,13 @@ import java.util.Optional;
 
 public class SkysongClient implements ClientModInitializer {
     private static final String KEY_CATEGORY = "key.category.skysong";
+
+    private static SkysongHud hud;
+
+    /** The HUD, for the mixin that draws it while the game HUD is hidden. Empty if Skysong didn't start. */
+    public static Optional<SkysongHud> hud() {
+        return Optional.ofNullable(hud);
+    }
 
     @Override
     public void onInitializeClient() {
@@ -56,19 +65,20 @@ public class SkysongClient implements ClientModInitializer {
             lyrics.stop();
         });
 
-        WorldLyricsRenderer worldLyrics = new WorldLyricsRenderer(tracker, lyrics, config);
+        LyricsPlayback playback = new LyricsPlayback(tracker, lyrics, config);
+        WorldLyricsRenderer worldLyrics = new WorldLyricsRenderer(playback, config);
         WorldRenderEvents.LAST.register(worldLyrics::render);
 
-        NowPlayingOverlay overlay = new NowPlayingOverlay(tracker, lyrics);
-        HudRenderCallback.EVENT.register((graphics, tickDelta) -> overlay.render(graphics));
+        hud = new SkysongHud(playback, config);
+        HudRenderCallback.EVENT.register((graphics, tickDelta) -> hud.render(graphics));
 
-        KeyMapping toggleOverlay = KeyBindingHelper.registerKeyBinding(new KeyMapping(
-                "key.skysong.toggle_overlay", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_K, KEY_CATEGORY));
+        KeyMapping editHud = KeyBindingHelper.registerKeyBinding(new KeyMapping(
+                "key.skysong.edit_hud", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_K, KEY_CATEGORY));
         KeyMapping toggleLyrics = KeyBindingHelper.registerKeyBinding(new KeyMapping(
                 "key.skysong.toggle_lyrics", InputConstants.Type.KEYSYM, InputConstants.UNKNOWN.getValue(), KEY_CATEGORY));
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            while (toggleOverlay.consumeClick()) {
-                overlay.toggle();
+            while (editHud.consumeClick()) {
+                client.setScreen(new HudEditScreen(hud, config, settingsFile));
             }
             while (toggleLyrics.consumeClick()) {
                 config.worldLyrics = !config.worldLyrics;

@@ -4,9 +4,8 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.fernsehheft.skysong.config.SkysongConfig;
 import io.github.fernsehheft.skysong.lyrics.LyricLine;
 import io.github.fernsehheft.skysong.lyrics.Lyrics;
-import io.github.fernsehheft.skysong.lyrics.LyricsService;
-import io.github.fernsehheft.skysong.media.NowPlaying;
-import io.github.fernsehheft.skysong.media.NowPlayingTracker;
+import io.github.fernsehheft.skysong.lyrics.LyricsPlayback;
+import io.github.fernsehheft.skysong.lyrics.TimedWord;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -38,13 +37,10 @@ public final class WorldLyricsRenderer {
     private static final long LEAVE_MS = 450;
     /** A line disappears this long after its last word, if the next one takes a while. */
     private static final long LINGER_MS = 4000;
-    /** For the last line of a song, which has no next line to end it. */
-    private static final long LAST_LINE_MS = 6000;
     /** Unsung words in karaoke mode are this see-through. */
     private static final float UNSUNG_ALPHA = 0.55f;
 
-    private final NowPlayingTracker tracker;
-    private final LyricsService lyrics;
+    private final LyricsPlayback playback;
     private final SkysongConfig config;
     private final Random random = new Random();
 
@@ -71,24 +67,23 @@ public final class WorldLyricsRenderer {
         }
     }
 
-    public WorldLyricsRenderer(NowPlayingTracker tracker, LyricsService lyrics, SkysongConfig config) {
-        this.tracker = tracker;
-        this.lyrics = lyrics;
+    public WorldLyricsRenderer(LyricsPlayback playback, SkysongConfig config) {
+        this.playback = playback;
         this.config = config;
     }
 
     public void render(WorldRenderContext context) {
-        Lyrics song = currentLyrics();
-        NowPlaying track = tracker.current().orElse(null);
-        if (song == null || track == null || !config.worldLyrics) {
+        LyricsPlayback.Moment moment = playback.now().orElse(null);
+        if (moment == null || moment.lyrics() == null || !config.worldLyrics) {
             clear();
             return;
         }
 
-        long time = track.positionAt(System.nanoTime()) + config.offsetMs;
-        int index = song.lineIndexAt(time);
+        Lyrics song = moment.lyrics();
+        long time = moment.timeMs();
+        int index = moment.lineIndex();
         if (song != shownLyrics || index != shownIndex) {
-            switchLine(song, index, time, context);
+            switchLine(song, index, moment.lineEndMs(), time, context);
         }
         if (current != null && time >= current.visibleUntil) {
             startLeaving(current, current.visibleUntil);
@@ -114,16 +109,7 @@ public final class WorldLyricsRenderer {
         buffers.endBatch();
     }
 
-    private Lyrics currentLyrics() {
-        LyricsService.State state = lyrics.state();
-        NowPlaying track = tracker.current().orElse(null);
-        if (state.status() != LyricsService.Status.FOUND || track == null || !track.isSameTrack(state.track())) {
-            return null;
-        }
-        return state.lyrics();
-    }
-
-    private void switchLine(Lyrics song, int index, long time, WorldRenderContext context) {
+    private void switchLine(Lyrics song, int index, long end, long time, WorldRenderContext context) {
         if (current != null) {
             startLeaving(current, time);
         }
@@ -134,12 +120,10 @@ public final class WorldLyricsRenderer {
             return;
         }
 
-        List<LyricLine> lines = song.lines();
-        LyricLine line = lines.get(index);
+        LyricLine line = song.lines().get(index);
         if (line.isBreak()) {
             return;
         }
-        long end = index + 1 < lines.size() ? lines.get(index + 1).startMs() : line.startMs() + LAST_LINE_MS;
         List<TimedWord> words = TimedWord.of(line, end);
         if (words.isEmpty()) {
             return;
@@ -210,7 +194,9 @@ public final class WorldLyricsRenderer {
         }
 
         // In text space y points down, so a positive offset is below the line's spot.
-        float lineOffsetY = 0;
+        // A leaving line always drifts up, so it clears the way for the next one,
+        // which in the AHEAD placement shows up at the very same spot.
+        float lineOffsetY = -leave * 12;
         if (config.animation == Animation.RISE) {
             lineOffsetY = (1 - appear) * 12 - leave * 14;
         }

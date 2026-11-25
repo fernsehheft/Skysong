@@ -50,4 +50,16 @@ class SkysongConfigTest {
         Files.writeString(file, "{ this is not json");
         assertEquals(Placement.AHEAD, SkysongConfig.load(file).placement);
     }
+
+    @Test
+    void savesTidyNumbers(@TempDir Path directory) throws IOException {
+        Path file = directory.resolve("settings.json");
+        SkysongConfig config = SkysongConfig.load(file);
+        config.karaokeX = 0.5011709601873536;
+        config.karaokeScale = 1.3000000000000003;
+        config.save(file);
+        String saved = Files.readString(file);
+        assertTrue(saved.contains("\"karaokeX\": 0.501,"), saved);
+        assertTrue(saved.contains("\"karaokeScale\": 1.3,"), saved);
+    }
 }

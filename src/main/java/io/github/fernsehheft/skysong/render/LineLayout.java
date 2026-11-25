@@ -1,5 +1,7 @@
 package io.github.fernsehheft.skysong.render;
 
+import io.github.fernsehheft.skysong.lyrics.TimedWord;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.ToIntFunction;
@@ -8,14 +10,14 @@ import java.util.function.ToIntFunction;
  * Lays the words of a line out in rows, centred around (0, 0), in font pixels. Long
  * lines are wrapped so they don't stretch across the whole screen.
  */
-final class LineLayout {
-    record PlacedWord(TimedWord word, float x, float y, int width) {
+public final class LineLayout {
+    public record PlacedWord(TimedWord word, float x, float y, int width) {
     }
 
     private LineLayout() {
     }
 
-    static List<PlacedWord> layout(List<TimedWord> words, ToIntFunction<String> width, int spaceWidth,
+    public static List<PlacedWord> layout(List<TimedWord> words, ToIntFunction<String> width, int spaceWidth,
                                    int maxRowWidth, int rowHeight) {
         // Aim for rows of about the same width, so a long line becomes two halves
         // instead of a full row with one lonely word below it.

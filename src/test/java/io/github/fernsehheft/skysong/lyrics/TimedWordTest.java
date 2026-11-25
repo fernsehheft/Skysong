@@ -1,7 +1,5 @@
-package io.github.fernsehheft.skysong.render;
+package io.github.fernsehheft.skysong.lyrics;
 
-import io.github.fernsehheft.skysong.lyrics.LyricLine;
-import io.github.fernsehheft.skysong.lyrics.LyricWord;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;

@@ -1,5 +1,6 @@
 package io.github.fernsehheft.skysong.render;
 
+import io.github.fernsehheft.skysong.lyrics.TimedWord;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;

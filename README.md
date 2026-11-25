@@ -4,8 +4,18 @@ A client-side Fabric mod that shows the synced lyrics of whatever you're listeni
 right inside your Minecraft world.
 
 > Early development. Skysong finds out which song is playing, loads its lyrics and shows
-> them floating in front of you, word by word. Press **K** for a small readout of the song
-> in the corner of the screen.
+> them floating in front of you, word by word.
+
+## On screen
+
+- **Karaoke bar**: the current line as a subtitle, words lighting up as they're sung, with the next line below
+- **Now playing card**: song, artist, a progress bar and whether lyrics were found
+- **Title intro**: the song's name, big, when a new song starts
+- **Cinematic bars**: black bars at the top and bottom while music plays (off by default)
+
+Press **K** to move the karaoke bar and the card with the mouse and resize them with the
+mouse wheel. Hide the game HUD with **F1** and the karaoke bar, title intro and cinematic
+bars stay, which is handy for recording videos.
 
 ## Settings
 
@@ -20,6 +30,11 @@ Until there's a settings screen, the settings live in `.minecraft/config/skysong
 | `size` | Text size, 1.0 is normal (0.25 to 4) | `1.0` |
 | `textColor`, `highlightColor` | Colours like `"#FFD966"` | `#FFFFFF`, `#FFD966` |
 | `offsetMs` | Show the lyrics this many milliseconds earlier (negative: later) | `0` |
+| `karaokeBar`, `karaokeStyle` | Show the karaoke bar; style `PILL` (dark background) or `MINIMAL` (just text) | `true`, `PILL` |
+| `nowPlayingCard` | Show the now playing card | `true` |
+| `titleIntro` | Show the song title when a new song starts | `true` |
+| `cinematicBars`, `cinematicBarSize` | Black bars while music plays, and their height as a share of the screen | `false`, `0.09` |
+| `hudWhenHidden` | Keep the karaoke bar, title intro and bars when the HUD is hidden with F1 | `true` |
 | `demoSong` | Play a built-in demo song instead of your music, to try the looks (needs a restart) | `false` |
 
 ## Where the music comes from
