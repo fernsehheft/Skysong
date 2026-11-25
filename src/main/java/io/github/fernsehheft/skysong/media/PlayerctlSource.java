@@ -26,7 +26,8 @@ public final class PlayerctlSource implements MediaSource {
         try {
             output = ProcessOutput.run(2000, COMMAND);
         } catch (IOException e) {
-            if (e.getMessage() != null && e.getMessage().contains("error=2")) {
+            // Java can't start a program that doesn't exist; the exact wording varies between versions.
+            if (e.getMessage() != null && e.getMessage().startsWith("Cannot run program")) {
                 throw new IOException("playerctl is not installed (e.g. 'sudo apt install playerctl')", e);
             }
             throw e;

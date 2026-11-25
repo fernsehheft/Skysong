@@ -6,6 +6,7 @@ import io.github.fernsehheft.skysong.lyrics.LyricsService;
 import io.github.fernsehheft.skysong.media.NowPlaying;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
 
 /** A small card with the song, a progress bar and whether lyrics were found. */
 final class NowPlayingCard implements MovableElement {
@@ -29,8 +30,8 @@ final class NowPlayingCard implements MovableElement {
     }
 
     @Override
-    public String name() {
-        return "Now playing";
+    public Component name() {
+        return Component.translatable("skysong.hud.now_playing");
     }
 
     @Override

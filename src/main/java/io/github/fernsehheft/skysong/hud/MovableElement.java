@@ -3,10 +3,11 @@ package io.github.fernsehheft.skysong.hud;
 import io.github.fernsehheft.skysong.lyrics.LyricsPlayback;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
 
 /** A HUD element the player can move and resize in the HUD editor. */
 interface MovableElement {
-    String name();
+    Component name();
 
     boolean enabled();
 

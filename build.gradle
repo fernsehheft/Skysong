@@ -11,6 +11,13 @@ base {
 
 repositories {
     mavenCentral()
+    maven {
+        name = 'TerraformersMC'
+        url = 'https://maven.terraformersmc.com/releases/'
+        content {
+            includeGroup 'com.terraformersmc'
+        }
+    }
 }
 
 dependencies {
@@ -20,6 +27,11 @@ dependencies {
     mappings loom.officialMojangMappings()
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+
+    // Optional: Skysong works without Mod Menu, but shows its settings there if it's installed.
+    // Not transitive: it would pull in older versions of the Fabric libraries we already have.
+    modCompileOnly("com.terraformersmc:modmenu:${project.modmenu_version}") { transitive = false }
+    modLocalRuntime("com.terraformersmc:modmenu:${project.modmenu_version}") { transitive = false }
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.3'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'

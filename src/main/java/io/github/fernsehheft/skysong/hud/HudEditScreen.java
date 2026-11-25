@@ -7,8 +7,6 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 
-import java.nio.file.Path;
-
 /** Lets the player drag the HUD elements around and resize them with the mouse wheel. */
 public final class HudEditScreen extends Screen {
     private static final int DIM = 0x66000000;
@@ -17,19 +15,22 @@ public final class HudEditScreen extends Screen {
     private static final int HINT_COLOR = 0xFFDDDDDD;
     private static final double SCALE_STEP = 0.1;
 
+    private final Screen parent;
     private final SkysongHud hud;
     private final SkysongConfig config;
-    private final Path settingsFile;
 
     private MovableElement dragged;
     private double grabOffsetX;
     private double grabOffsetY;
 
-    public HudEditScreen(SkysongHud hud, SkysongConfig config, Path settingsFile) {
-        super(Component.literal("Skysong HUD"));
+    /**
+     * @param parent the screen to go back to when done, or null to go back to the game
+     */
+    public HudEditScreen(Screen parent, SkysongHud hud, SkysongConfig config) {
+        super(Component.translatable("skysong.hud_editor.title"));
+        this.parent = parent;
         this.hud = hud;
         this.config = config;
-        this.settingsFile = settingsFile;
     }
 
     @Override
@@ -52,9 +53,7 @@ public final class HudEditScreen extends Screen {
             graphics.drawString(font, element.name(), box.x(), labelY, HINT_COLOR);
         }
 
-        String hint = any
-                ? "Drag to move  ·  Scroll to resize  ·  R resets  ·  Esc when you're done"
-                : "The karaoke bar and the now playing card are both turned off";
+        Component hint = Component.translatable(any ? "skysong.hud_editor.hint" : "skysong.hud_editor.nothing");
         graphics.drawCenteredString(font, hint, width / 2, height - 20, HINT_COLOR);
         super.render(graphics, mouseX, mouseY, partialTick);
     }
@@ -138,7 +137,12 @@ public final class HudEditScreen extends Screen {
 
     @Override
     public void removed() {
-        config.save(settingsFile);
+        config.save();
+    }
+
+    @Override
+    public void onClose() {
+        minecraft.setScreen(parent);
     }
 
     @Override

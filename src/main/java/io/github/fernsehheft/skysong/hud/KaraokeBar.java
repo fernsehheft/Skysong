@@ -8,6 +8,7 @@ import io.github.fernsehheft.skysong.render.Easing;
 import io.github.fernsehheft.skysong.render.LineLayout;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
 
 import java.util.List;
 
@@ -38,8 +39,8 @@ final class KaraokeBar implements MovableElement {
     }
 
     @Override
-    public String name() {
-        return "Karaoke bar";
+    public Component name() {
+        return Component.translatable("skysong.hud.karaoke_bar");
     }
 
     @Override

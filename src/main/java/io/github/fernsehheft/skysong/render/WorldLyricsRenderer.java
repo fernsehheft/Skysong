@@ -2,6 +2,7 @@ package io.github.fernsehheft.skysong.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.fernsehheft.skysong.config.SkysongConfig;
+import io.github.fernsehheft.skysong.gui.PreviewArea;
 import io.github.fernsehheft.skysong.lyrics.LyricLine;
 import io.github.fernsehheft.skysong.lyrics.Lyrics;
 import io.github.fernsehheft.skysong.lyrics.LyricsPlayback;
@@ -163,11 +164,27 @@ public final class WorldLyricsRenderer {
             height = -0.3 + random.nextDouble() * 1.1;
         }
 
+        yaw += previewYawShift();
         double radians = Math.toRadians(yaw);
         Vec3 direction = new Vec3(-Math.sin(radians), 0, Math.cos(radians));
         Vec3 eye = camera.getPosition();
         Vec3 target = eye.add(direction.scale(distance)).add(0, height, 0);
         return inFrontOfWalls(level, eye, target);
+    }
+
+    /**
+     * While the settings cover the left of the screen, new lines are turned to the right
+     * by the angle at which the middle of the still visible part is seen.
+     */
+    private static double previewYawShift() {
+        Minecraft minecraft = Minecraft.getInstance();
+        float shift = PreviewArea.centerShift(minecraft.getWindow().getGuiScaledWidth());
+        if (shift == 0) {
+            return 0;
+        }
+        double aspect = (double) minecraft.getWindow().getWidth() / Math.max(1, minecraft.getWindow().getHeight());
+        double halfVerticalFov = Math.toRadians(minecraft.options.fov().get() / 2.0);
+        return Math.toDegrees(Math.atan(shift * Math.tan(halfVerticalFov) * aspect));
     }
 
     /** Pulls the spot towards the player if a wall is in the way, so the text isn't hidden in it. */

@@ -26,7 +26,8 @@ public final class DemoSource implements MediaSource {
             [00:29.50]
             """;
 
-    private final long startedAt = System.nanoTime();
+    private boolean playing = true;
+    private long startedAt = System.nanoTime();
 
     public static boolean isDemo(NowPlaying track) {
         return track != null && PLAYER.equals(track.player()) && TITLE.equals(track.title());
@@ -37,8 +38,23 @@ public final class DemoSource implements MediaSource {
         return "the demo song";
     }
 
+    /** Starts the demo from the beginning, unless it's already playing. */
+    void restartIfStopped() {
+        if (!playing) {
+            playing = true;
+            startedAt = System.nanoTime();
+        }
+    }
+
+    void stop() {
+        playing = false;
+    }
+
     @Override
     public Optional<NowPlaying> poll() {
+        if (!playing) {
+            return Optional.empty();
+        }
         long now = System.nanoTime();
         long position = ((now - startedAt) / 1_000_000L) % DURATION_MS;
         return Optional.of(new NowPlaying(TITLE, ARTIST, "", DURATION_MS, position, true, PLAYER, now));

@@ -8,10 +8,13 @@ import io.github.fernsehheft.skysong.render.Animation;
 import io.github.fernsehheft.skysong.render.Placement;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 /**
@@ -26,7 +29,10 @@ public final class SkysongConfig {
     public static final double MIN_HUD_SCALE = 0.5;
     public static final double MAX_HUD_SCALE = 3.0;
 
-    /** Play the built-in demo song instead of listening to the music player. Needs a restart. */
+    /** Where these settings are saved. Not part of the file itself. */
+    private transient Path file;
+
+    /** Play the built-in demo song instead of listening to the music player. */
     public boolean demoSong = false;
     /** Show the lyrics in the world at all. */
     public boolean worldLyrics = true;
@@ -94,13 +100,17 @@ public final class SkysongConfig {
         if (config == null) {
             config = new SkysongConfig();
         }
+        config.file = file;
         config.fixValues();
         // Write it back so new settings show up in the file and broken values get repaired.
-        config.save(file);
+        config.save();
         return config;
     }
 
-    public void save(Path file) {
+    public void save() {
+        if (file == null) {
+            return;
+        }
         fixValues();
         try {
             Files.createDirectories(file.getParent());
@@ -136,23 +146,44 @@ public final class SkysongConfig {
         cinematicBarSize = clamp(cinematicBarSize, 0.02, 0.25);
     }
 
+    /** Puts every setting back to its default, keeping this object so everything using it sees the change. */
+    public void resetToDefaults() {
+        SkysongConfig defaults = new SkysongConfig();
+        for (Field field : SkysongConfig.class.getDeclaredFields()) {
+            int modifiers = field.getModifiers();
+            if (Modifier.isStatic(modifiers) || Modifier.isTransient(modifiers)) {
+                continue;
+            }
+            try {
+                field.set(this, field.get(defaults));
+            } catch (IllegalAccessException e) {
+                throw new IllegalStateException("Can't reset " + field.getName(), e);
+            }
+        }
+    }
+
+    /** {@code text} as a colour like "#FF8800" if it is one, with or without the "#". */
+    public static Optional<String> parseColor(String text) {
+        if (text == null || !HEX_COLOR.matcher(text.strip()).matches()) {
+            return Optional.empty();
+        }
+        String hex = text.strip();
+        return Optional.of((hex.startsWith("#") ? hex : "#" + hex).toUpperCase(Locale.ROOT));
+    }
+
     public int textRgb() {
-        return parseColor(textColor);
+        return toRgb(textColor);
     }
 
     public int highlightRgb() {
-        return parseColor(highlightColor);
+        return toRgb(highlightColor);
     }
 
     private static String validColor(String color, String fallback) {
-        if (color == null || !HEX_COLOR.matcher(color.strip()).matches()) {
-            return fallback;
-        }
-        String hex = color.strip();
-        return (hex.startsWith("#") ? hex : "#" + hex).toUpperCase(Locale.ROOT);
+        return parseColor(color).orElse(fallback);
     }
 
-    private static int parseColor(String color) {
+    private static int toRgb(String color) {
         return Integer.parseInt(color.substring(1), 16);
     }
 

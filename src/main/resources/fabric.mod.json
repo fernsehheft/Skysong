@@ -12,7 +12,8 @@
   },
   "environment": "client",
   "entrypoints": {
-    "client": ["io.github.fernsehheft.skysong.SkysongClient"]
+    "client": ["io.github.fernsehheft.skysong.SkysongClient"],
+    "modmenu": ["io.github.fernsehheft.skysong.gui.ModMenuIntegration"]
   },
   "mixins": ["skysong.mixins.json"],
   "depends": {
@@ -20,5 +21,8 @@
     "minecraft": "~1.20",
     "java": ">=17",
     "fabric-api": "*"
+  },
+  "suggests": {
+    "modmenu": "*"
   }
 }

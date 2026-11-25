@@ -57,9 +57,41 @@ class SkysongConfigTest {
         SkysongConfig config = SkysongConfig.load(file);
         config.karaokeX = 0.5011709601873536;
         config.karaokeScale = 1.3000000000000003;
-        config.save(file);
+        config.save();
         String saved = Files.readString(file);
         assertTrue(saved.contains("\"karaokeX\": 0.501,"), saved);
         assertTrue(saved.contains("\"karaokeScale\": 1.3,"), saved);
+    }
+
+    @Test
+    void resetKeepsTheFileButRestoresDefaults(@TempDir Path directory) throws IOException {
+        Path file = directory.resolve("settings.json");
+        SkysongConfig config = SkysongConfig.load(file);
+        config.animation = Animation.RISE;
+        config.cinematicBars = true;
+        config.resetToDefaults();
+        assertEquals(Animation.KARAOKE, config.animation);
+        assertEquals(false, config.cinematicBars);
+
+        config.save();
+        assertEquals(Animation.KARAOKE, SkysongConfig.load(file).animation);
+    }
+
+    @Test
+    void presetsApplyAndAreRecognised(@TempDir Path directory) {
+        SkysongConfig config = SkysongConfig.load(directory.resolve("settings.json"));
+        assertEquals(LookPreset.CLASSIC, LookPreset.matching(config));
+
+        LookPreset.NEON.applyTo(config);
+        assertEquals(LookPreset.NEON, LookPreset.matching(config));
+
+        config.highlightColor = "#123456";
+        assertEquals(LookPreset.CUSTOM, LookPreset.matching(config));
+    }
+
+    @Test
+    void parsesColours() {
+        assertEquals("#FF8800", SkysongConfig.parseColor(" ff8800 ").orElseThrow());
+        assertTrue(SkysongConfig.parseColor("#FF88").isEmpty());
     }
 }

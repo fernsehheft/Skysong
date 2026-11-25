@@ -13,13 +13,19 @@ right inside your Minecraft world.
 - **Title intro**: the song's name, big, when a new song starts
 - **Cinematic bars**: black bars at the top and bottom while music plays (off by default)
 
-Press **K** to move the karaoke bar and the card with the mouse and resize them with the
-mouse wheel. Hide the game HUD with **F1** and the karaoke bar, title intro and cinematic
-bars stay, which is handy for recording videos.
+Click **Move HUD** in the settings to drag the karaoke bar and the card around and resize
+them with the mouse wheel. Hide the game HUD with **F1** and the karaoke bar, title intro and
+cinematic bars stay, which is handy for recording videos.
 
 ## Settings
 
-Until there's a settings screen, the settings live in `.minecraft/config/skysong/settings.json`:
+Press **K** in game, or use the settings button in [Mod Menu](https://modrinth.com/mod/modmenu)
+if you have it. The settings sit on the left so you can watch every change on the right
+while the music plays. Nothing playing? Turn on the demo song in the Music tab.
+
+Presets give you a ready-made look in one click: Classic, Neon, Sunset, Dreamy and Bold.
+
+Everything is saved in `.minecraft/config/skysong/settings.json`, which you can also edit by hand:
 
 | Setting | What it does | Default |
 |---|---|---|
@@ -35,7 +41,7 @@ Until there's a settings screen, the settings live in `.minecraft/config/skysong
 | `titleIntro` | Show the song title when a new song starts | `true` |
 | `cinematicBars`, `cinematicBarSize` | Black bars while music plays, and their height as a share of the screen | `false`, `0.09` |
 | `hudWhenHidden` | Keep the karaoke bar, title intro and bars when the HUD is hidden with F1 | `true` |
-| `demoSong` | Play a built-in demo song instead of your music, to try the looks (needs a restart) | `false` |
+| `demoSong` | Play a built-in demo song instead of your music, to try the looks | `false` |
 
 ## Where the music comes from
 

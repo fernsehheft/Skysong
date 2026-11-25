@@ -1,6 +1,7 @@
 package io.github.fernsehheft.skysong.hud;
 
 import io.github.fernsehheft.skysong.config.SkysongConfig;
+import io.github.fernsehheft.skysong.gui.PreviewArea;
 import io.github.fernsehheft.skysong.lyrics.LyricsPlayback;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -48,11 +49,15 @@ public final class SkysongHud {
         lastFrame = now;
 
         Font font = Minecraft.getInstance().font;
-        int width = graphics.guiWidth();
         int height = graphics.guiHeight();
         LyricsPlayback.Moment moment = playback.now().orElse(null);
+        cinematicBars.render(graphics, graphics.guiWidth(), height, moment, seconds);
 
-        cinematicBars.render(graphics, width, height, moment, seconds);
+        // With the settings open, lay everything out in the part of the screen they don't cover.
+        int left = PreviewArea.left();
+        int width = graphics.guiWidth() - left;
+        graphics.pose().pushPose();
+        graphics.pose().translate(left, 0, 0);
         titleIntro.render(graphics, font, width, height, moment);
         if (withKaraoke && karaokeBar.enabled()) {
             karaokeBar.render(graphics, font, width, height, moment, false);
@@ -60,13 +65,14 @@ public final class SkysongHud {
         if (withCard && nowPlayingCard.enabled()) {
             nowPlayingCard.render(graphics, font, width, height, moment, false);
         }
+        graphics.pose().popPose();
     }
 
     List<MovableElement> movableElements() {
         return List.of(karaokeBar, nowPlayingCard);
     }
 
-    LyricsPlayback playback() {
+    public LyricsPlayback playback() {
         return playback;
     }
 }
