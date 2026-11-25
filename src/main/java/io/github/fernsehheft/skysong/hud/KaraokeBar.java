@@ -61,7 +61,7 @@ final class KaraokeBar implements MovableElement {
             LyricLine line = moment.line().filter(l -> !l.isBreak()).orElse(null);
             time = moment.timeMs();
             if (line != null) {
-                words = TimedWord.of(line, moment.lineEndMs());
+                words = TimedWord.of(line, moment.lineEndMs(), config.estimateWordTiming);
                 lineStart = line.startMs();
             } else {
                 // Between lines: a quiet note until the singing starts again.

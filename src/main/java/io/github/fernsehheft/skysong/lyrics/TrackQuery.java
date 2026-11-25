@@ -29,6 +29,14 @@ public record TrackQuery(String title, String artist, String album, long duratio
             "\\s+-\\s+.*\\b(remaster(ed)?|live|radio edit|single version|album version|mono|stereo|"
                     + VERSION_WORDS + ")\\b.*$",
             Pattern.CASE_INSENSITIVE);
+    /**
+     * Version words at the very end of a title without brackets or a dash, as in
+     * "Shape of You Hardtekk". Only words that are hardly ever part of a song's real name.
+     */
+    private static final Pattern TRAILING_VERSION = Pattern.compile(
+            "(\\s+(remix|rmx|bootleg|sped up|speed up|spedup|slowed|reverb|nightcore|daycore|hard ?techno|techno"
+                    + "|hard ?tekk|tekk|hardstyle|phonk|bass ?boosted|extended mix|club mix|radio mix|vip mix))+\\s*$",
+            Pattern.CASE_INSENSITIVE);
     private static final Pattern FEATURING = Pattern.compile(
             "\\s+(feat\\.?|ft\\.?|featuring)\\s+.*$", Pattern.CASE_INSENSITIVE);
     private static final Pattern CHANNEL_SUFFIX = Pattern.compile(
@@ -44,6 +52,7 @@ public record TrackQuery(String title, String artist, String album, long duratio
     public String cleanTitle() {
         String title = NOISE_IN_BRACKETS.matcher(this.title).replaceAll("");
         title = VERSION_SUFFIX.matcher(title).replaceAll("");
+        title = TRAILING_VERSION.matcher(title).replaceAll("");
         title = FEATURING.matcher(title).replaceAll("");
         title = title.replaceAll("\\s{2,}", " ").strip();
         return title.isEmpty() ? this.title.strip() : title;

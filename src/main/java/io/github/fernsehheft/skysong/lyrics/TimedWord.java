@@ -10,13 +10,19 @@ public record TimedWord(String text, long startMs) {
     /** Nobody sings a single word for longer than this, even in a slow song. */
     private static final long MAX_MS_PER_LETTER = 180;
 
+    /** Without real word timing, the words of a line follow each other this closely, just for the animation. */
+    private static final long STAGGER_MS = 60;
+
     /**
-     * The words of {@code line} with their timing. Most lyrics only say when a line
-     * starts, so then the words are spread over the line, longer words taking longer.
+     * The words of {@code line} with their timing. Most lyrics only say when a line starts.
+     * Then the words either come all together with a short stagger, or, with
+     * {@code estimate}, are spread over the line, longer words taking longer.
      *
-     * @param endMs when the line is over, usually where the next one starts
+     * @param endMs    when the line is over, usually where the next one starts
+     * @param estimate guess when each word is sung if the lyrics don't say. Singers hold notes
+     *                 and take breaths, so a guess runs ahead or behind now and then.
      */
-    public static List<TimedWord> of(LyricLine line, long endMs) {
+    public static List<TimedWord> of(LyricLine line, long endMs, boolean estimate) {
         if (!line.words().isEmpty()) {
             List<TimedWord> words = new ArrayList<>(line.words().size());
             for (LyricWord word : line.words()) {
@@ -28,6 +34,13 @@ public record TimedWord(String text, long startMs) {
         String[] texts = line.text().strip().split("\\s+");
         if (texts.length == 1 && texts[0].isEmpty()) {
             return List.of();
+        }
+        if (!estimate) {
+            List<TimedWord> words = new ArrayList<>(texts.length);
+            for (int i = 0; i < texts.length; i++) {
+                words.add(new TimedWord(texts[i], line.startMs() + i * STAGGER_MS));
+            }
+            return words;
         }
         long letters = 0;
         for (String text : texts) {

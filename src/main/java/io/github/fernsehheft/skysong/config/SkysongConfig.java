@@ -64,6 +64,14 @@ public final class SkysongConfig {
     /** The view zooms in a tiny bit when a new line starts, like a cut in a music video. */
     public boolean beatZoom = true;
 
+    /**
+     * Most lyrics only have the time of each line. With this on, words light up one by one at
+     * a guessed time; off, a line's words come together. Real word timing is always used.
+     */
+    public boolean estimateWordTiming = false;
+    /** Shows the timing details on screen, to find out why lyrics are early or late. */
+    public boolean debugOverlay = false;
+
     /** Shows the lyrics this many milliseconds earlier (or later, if negative). */
     public long offsetMs = 0;
 

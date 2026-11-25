@@ -17,6 +17,7 @@ public final class SkysongHud {
     private final TitleIntro titleIntro;
     private final KaraokeBar karaokeBar;
     private final NowPlayingCard nowPlayingCard;
+    private final DebugOverlay debugOverlay;
     private long lastFrame = System.nanoTime();
     private static final float PAUSE_FADE_SECONDS = 0.4f;
 
@@ -27,6 +28,7 @@ public final class SkysongHud {
         this.titleIntro = new TitleIntro(config);
         this.karaokeBar = new KaraokeBar(config);
         this.nowPlayingCard = new NowPlayingCard(config);
+        this.debugOverlay = new DebugOverlay(config, playback);
     }
 
     /** Drawn together with the normal game HUD. */
@@ -71,6 +73,9 @@ public final class SkysongHud {
             nowPlayingCard.render(graphics, font, width, height, moment, false);
         }
         graphics.pose().popPose();
+        if (withCard) {
+            debugOverlay.render(graphics, font, moment);
+        }
     }
 
     List<MovableElement> movableElements() {

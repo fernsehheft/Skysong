@@ -62,4 +62,16 @@ class TrackQueryTest {
         // Only cut when it's clearly a note about the version, not part of the name.
         assertEquals("Mix Tape", query("Mix Tape", "").cleanTitle());
     }
+
+    @Test
+    void versionWordsAtTheEndWithoutBrackets() {
+        // A real title from Spotify: "Shape of You Hardtekk" by GoldZoro.
+        TrackQuery hardtekk = query("Shape of You Hardtekk", "GoldZoro");
+        assertEquals("Shape of You", hardtekk.cleanTitle());
+        assertTrue(hardtekk.isAlternateVersion());
+        assertEquals("Shape of You", query("Shape of You Hard Techno Remix", "").cleanTitle());
+        assertEquals("Blinding Lights", query("Blinding Lights Sped Up", "").cleanTitle());
+        // Words that only look like versions in the middle of a name stay.
+        assertEquals("Techno Is My Life", query("Techno Is My Life", "").cleanTitle());
+    }
 }

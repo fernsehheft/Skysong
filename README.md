@@ -9,7 +9,7 @@ right inside your Minecraft world.
 ## In the world
 
 - **Eight animations**: karaoke, fade, rise, wave, typewriter, glitch, drop and zoom
-- **Three placements**: straight ahead, scattered around you, or big in the sky
+- **Three placements**: straight ahead, scattered around you, or high up in the sky (look up and they follow)
 - **Effects**: glow, 3D letters, sparks flying off every sung word, and a small beat zoom when a new line starts
 - **Colours**: one colour, a flowing gradient between two colours, or a rainbow; the word being sung lights up in its own colour
 - Pause the music and the lyrics fade away; play on and they come back at the right line
@@ -53,6 +53,8 @@ Everything is saved in `.minecraft/config/skysong/settings.json`, which you can 
 | `cinematicBars`, `cinematicBarSize` | Black bars while music plays, and their height as a share of the screen | `false`, `0.09` |
 | `hudWhenHidden` | Keep the karaoke bar, title intro and bars when the HUD is hidden with F1 | `true` |
 | `musicSource` | `AUTO` (Spotify when logged in, else the system player), `SPOTIFY` or `SYSTEM` | `AUTO` |
+| `estimateWordTiming` | Guess when each word is sung if the lyrics only time whole lines | `false` |
+| `debugOverlay` | Show timing details in the top left | `false` |
 | `demoSong` | Play a built-in demo song instead of your music, to try the looks | `false` |
 
 ## Where the music comes from
@@ -102,6 +104,15 @@ The music control keys (play/pause, next, previous, volume) have no key by defau
 in Minecraft's Controls under Skysong.
 
 ## When the timing is off
+
+Turn on **Timing details** in the Music tab to see where the player says the song is, which
+time the lyrics use and which lyrics were found. The game log also notes which LRCLIB entry
+was picked.
+
+Most lyrics only say when each line starts, not each word. So by default the words of a line
+come together; **Guess word timing** lights them up one by one at a guessed time instead,
+which can run ahead when a singer holds a note. Lyrics with real word timing always go word
+by word.
 
 Lyrics databases usually have the timing of the album version. A music video with a longer
 intro, or a live version, can be ahead or behind. In the settings (Music tab) you can show

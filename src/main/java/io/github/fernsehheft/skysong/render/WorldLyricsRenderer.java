@@ -1,5 +1,6 @@
 package io.github.fernsehheft.skysong.render;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import io.github.fernsehheft.skysong.config.ColorMode;
 import io.github.fernsehheft.skysong.config.SkysongConfig;
@@ -39,21 +40,25 @@ public final class WorldLyricsRenderer {
     private static final int ROW_GAP = 3;
     private static final double MAX_SCATTER_DEGREES = 30;
     /**
-     * Lines in the sky are far away and high up, like a title over the landscape. Their size
-     * already grows with the distance, so only a little extra is added: a full line then
-     * takes up about as much of the view as one straight ahead.
+     * Lines in the sky are written high up and far away, like skywriting. They're at least
+     * this many degrees above the horizon; looking further up takes them along.
      */
-    private static final double SKY_DISTANCE = 22;
-    private static final double SKY_HEIGHT = 5;
-    private static final float SKY_SIZE = 1.15f;
+    private static final double SKY_MIN_ELEVATION = 18;
+    private static final double SKY_MAX_ELEVATION = 70;
+    private static final double SKY_DISTANCE = 45;
+    /** Their size grows with the distance; at this, a long line still fits the view. */
+    private static final float SKY_SIZE = 0.8f;
 
     private static final long MS_PER_TYPED_LETTER = 40;
     private static final long GLITCH_MS = 180;
     private static final String GLITCH_CHARACTERS = "#@%&*?!<>/\\=~";
     private static final int DEPTH_LAYERS = 4;
     private static final float DEPTH_STEP = 0.35f;
-    private static final float GLOW_ALPHA = 0.3f;
-    private static final float[][] GLOW_OFFSETS = {{-0.8f, 0}, {0.8f, 0}, {0, -0.8f}, {0, 0.8f}};
+    private static final float GLOW_CORE_WHITENESS = 0.6f;
+    /** Rim thickness and how far it sits behind the word, in font pixels; positive z is away from the camera. */
+    private static final float GLOW_WIDTH = 0.7f;
+    private static final float GLOW_BEHIND = 0.15f;
+    private static final int GLOW_MIN_ALPHA = 240;
     /** Sparks only for words sung within this long, not for ones that were over before the line showed up. */
     private static final long SPARKLE_WINDOW_MS = 300;
 
@@ -145,7 +150,15 @@ public final class WorldLyricsRenderer {
         if (current != null) {
             draw(pose, buffers, minecraft.font, camera, current, time);
         }
-        buffers.endBatch();
+        if (config.placement == Placement.SKY) {
+            // Minecraft's see-through text doesn't switch the depth test off, it expects it to
+            // be off already. Here it's still on, so the sky writing would hide behind trees.
+            RenderSystem.disableDepthTest();
+            buffers.endBatch();
+            RenderSystem.enableDepthTest();
+        } else {
+            buffers.endBatch();
+        }
     }
 
     /**
@@ -187,7 +200,7 @@ public final class WorldLyricsRenderer {
         if (line.isBreak()) {
             return;
         }
-        List<TimedWord> words = TimedWord.of(line, end);
+        List<TimedWord> words = TimedWord.of(line, end, config.estimateWordTiming);
         if (words.isEmpty()) {
             return;
         }
@@ -223,13 +236,13 @@ public final class WorldLyricsRenderer {
     }
 
     private Vec3 placeLine(Camera camera, ClientLevel level) {
+        if (config.placement == Placement.SKY) {
+            return skyPlace(camera);
+        }
         double yaw = camera.getYRot();
         double distance = config.distance;
         double height = 0.2;
-        if (config.placement == Placement.SKY) {
-            distance = SKY_DISTANCE;
-            height = SKY_HEIGHT;
-        } else if (config.placement == Placement.SCATTERED) {
+        if (config.placement == Placement.SCATTERED) {
             // Stay well inside the default field of view, so no line ends up half off screen.
             yaw += (random.nextDouble() * 2 - 1) * MAX_SCATTER_DEGREES;
             distance *= 0.85 + random.nextDouble() * 0.4;
@@ -242,6 +255,19 @@ public final class WorldLyricsRenderer {
         Vec3 eye = camera.getPosition();
         Vec3 target = eye.add(direction.scale(distance)).add(0, height, 0);
         return inFrontOfWalls(level, eye, target);
+    }
+
+    /**
+     * High up in the direction the player faces. Nothing is pulled out of the way here: the
+     * sky is far beyond any wall, and a tree in between doesn't make the lyrics any less "up there".
+     */
+    private static Vec3 skyPlace(Camera camera) {
+        // Minecraft's pitch is negative when looking up.
+        double elevation = Math.max(SKY_MIN_ELEVATION, Math.min(SKY_MAX_ELEVATION, -camera.getXRot()));
+        double yaw = Math.toRadians(camera.getYRot() + previewYawShift());
+        double up = Math.toRadians(elevation);
+        Vec3 direction = new Vec3(-Math.sin(yaw) * Math.cos(up), Math.sin(up), Math.cos(yaw) * Math.cos(up));
+        return camera.getPosition().add(direction.scale(SKY_DISTANCE));
     }
 
     /**
@@ -429,23 +455,36 @@ public final class WorldLyricsRenderer {
                 pose.popPose();
             }
         }
-        if (config.glow) {
-            // A halo of see-through copies around the word: in the highlight colour, or with
-            // a gradient or rainbow in the word's own colour, which a white glow would wash out.
-            int glowColor = config.colorMode == ColorMode.SINGLE ? config.highlightRgb() : look.color;
-            int halo = withAlpha(glowColor, Math.max(5, Math.round(alphaByte * GLOW_ALPHA)));
-            for (float[] offset : GLOW_OFFSETS) {
-                text(font, look.text, -halfWidth + offset[0], -halfHeight + offset[1], halo, false, pose, buffers);
+        if (config.glow && alphaByte >= GLOW_MIN_ALPHA) {
+            // Like a neon tube: a bright core with a rim in the word's colour around it. The rim
+            // is eight solid copies set a little behind the word, so it can't cover the core.
+            // (Minecraft's own glowing sign outline ends up in front of the text in this view.)
+            int rim = withAlpha(config.colorMode == ColorMode.SINGLE ? config.highlightRgb() : look.color, alphaByte);
+            int core = Easing.lerpColor(look.color, 0xFFFFFF, GLOW_CORE_WHITENESS);
+            pose.pushPose();
+            pose.translate(0, 0, GLOW_BEHIND);
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dy = -1; dy <= 1; dy++) {
+                    if (dx != 0 || dy != 0) {
+                        text(font, look.text, -halfWidth + dx * GLOW_WIDTH, -halfHeight + dy * GLOW_WIDTH, rim, false,
+                                pose, buffers);
+                    }
+                }
             }
+            pose.popPose();
+            text(font, look.text, -halfWidth, -halfHeight, withAlpha(core, alphaByte), false, pose, buffers);
+        } else {
+            // Also while a glowing word fades in or out: the outline can't be see-through.
+            text(font, look.text, -halfWidth, -halfHeight, withAlpha(look.color, alphaByte), !config.depth3d, pose, buffers);
         }
-        text(font, look.text, -halfWidth, -halfHeight, withAlpha(look.color, alphaByte), !config.depth3d, pose, buffers);
         pose.popPose();
     }
 
-    private static void text(Font font, String text, float x, float y, int argb, boolean shadow,
-                             PoseStack pose, MultiBufferSource buffers) {
-        font.drawInBatch(text, x, y, argb, shadow, pose.last().pose(), buffers, Font.DisplayMode.NORMAL, 0,
-                LightTexture.FULL_BRIGHT);
+    private void text(Font font, String text, float x, float y, int argb, boolean shadow,
+                      PoseStack pose, MultiBufferSource buffers) {
+        // Writing in the sky stays in front of trees and hills, like a nametag seen through a wall.
+        Font.DisplayMode mode = config.placement == Placement.SKY ? Font.DisplayMode.SEE_THROUGH : Font.DisplayMode.NORMAL;
+        font.drawInBatch(text, x, y, argb, shadow, pose.last().pose(), buffers, mode, 0, LightTexture.FULL_BRIGHT);
     }
 
     /** Sends a few sparks off every word at the moment it's sung. */

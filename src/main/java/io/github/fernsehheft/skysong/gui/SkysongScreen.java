@@ -263,6 +263,8 @@ public final class SkysongScreen extends Screen {
         rows.add(new TextRow(this::lyricsText));
         choice("music_source", MusicSource.values(), config.musicSource, value -> config.musicSource = value);
         toggle("demo_song", config.demoSong, value -> config.demoSong = value);
+        toggle("estimate_word_timing", config.estimateWordTiming, value -> config.estimateWordTiming = value);
+        toggle("debug_overlay", config.debugOverlay, value -> config.debugOverlay = value);
         slider("offset", -2000, 2000, 50, config.offsetMs, value -> config.offsetMs = Math.round(value),
                 value -> Component.translatable("skysong.settings.unit.ms", String.format(Locale.ROOT, "%+d", Math.round(value))));
         button("open_lyrics_folder", () -> Util.getPlatform().openFile(lyricsFolder.toFile()));

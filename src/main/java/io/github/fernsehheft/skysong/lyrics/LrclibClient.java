@@ -57,13 +57,13 @@ public final class LrclibClient {
 
         Optional<LyricsText> found = search(Map.of(
                 "track_name", query.cleanTitle(),
-                "artist_name", query.mainArtist()), query.durationMs());
+                "artist_name", query.mainArtist()), query);
         if (found.isPresent()) {
             return found;
         }
         // Free text search, which also helps when the title contains the artist.
-        found = search(Map.of("q", query.mainArtist() + " " + query.cleanTitle()), query.durationMs());
-        if (found.isPresent() || !query.isAlternateVersion() || query.durationMs() <= 0) {
+        found = search(Map.of("q", query.mainArtist() + " " + query.cleanTitle()), query);
+        if (found.isPresent() || !query.isAlternateVersion()) {
             return found;
         }
         return findOriginalForVersion(query);
@@ -84,12 +84,14 @@ public final class LrclibClient {
         if (results.isEmpty() || !results.get().isJsonArray()) {
             return Optional.empty();
         }
-        Optional<JsonObject> original = pickBest(results.get().getAsJsonArray(), 0)
+        // The artist may be the remixer here, so only the title has to match.
+        Optional<JsonObject> original = pickBest(results.get().getAsJsonArray(), query, 0, false)
                 .filter(result -> toText(result).hasSynced() && duration(result) > 0);
         if (original.isEmpty()) {
             return Optional.empty();
         }
-        double scale = query.durationMs() / 1000.0 / duration(original.get());
+        // Without the version's length there's nothing to stretch to; the original timing is the best guess then.
+        double scale = query.durationMs() > 0 ? query.durationMs() / 1000.0 / duration(original.get()) : 1;
         log("original for " + (query.isSpeedChange() ? "speed change" : "remix"), original.get());
         return Optional.of(toText(original.get()).stretchedBy(scale));
     }
@@ -105,22 +107,29 @@ public final class LrclibClient {
                 string(result, "trackName"), string(result, "artistName"), string(result, "albumName"), duration(result));
     }
 
-    private Optional<LyricsText> search(Map<String, String> parameters, long durationMs) throws IOException {
+    private Optional<LyricsText> search(Map<String, String> parameters, TrackQuery query) throws IOException {
         Optional<JsonElement> results = get("/search", parameters);
         if (results.isEmpty() || !results.get().isJsonArray()) {
             return Optional.empty();
         }
-        Optional<JsonObject> best = pickBest(results.get().getAsJsonArray(), durationMs);
+        Optional<JsonObject> best = pickBest(results.get().getAsJsonArray(), query, query.durationMs(), true);
         best.ifPresent(result -> log("search match", result));
         return best.map(LrclibClient::toText);
     }
 
-    /** Prefers results with timestamps, then the one whose length is closest to the song's. */
-    static Optional<JsonObject> pickBest(JsonArray results, long durationMs) {
+    /**
+     * Picks the search result for our song. Searches also return other songs, so a result
+     * has to have our title (and with {@code artistMustMatch} our artist) to count at all.
+     * Among those, ones with timestamps win, then the one whose length is closest to the song's.
+     */
+    static Optional<JsonObject> pickBest(JsonArray results, TrackQuery query, long durationMs, boolean artistMustMatch) {
         JsonObject best = null;
         double bestScore = Double.MAX_VALUE;
         for (JsonElement element : results) {
             JsonObject result = element.getAsJsonObject();
+            if (!isSameSong(result, query, artistMustMatch)) {
+                continue;
+            }
             LyricsText text = toText(result);
             if (!text.hasSynced() && !text.hasPlain() && !text.instrumental()) {
                 continue;
@@ -139,6 +148,38 @@ public final class LrclibClient {
             }
         }
         return Optional.ofNullable(best);
+    }
+
+    /** Whether a search result is the song we look for and not just something with similar words. */
+    static boolean isSameSong(JsonObject result, TrackQuery query, boolean artistMustMatch) {
+        String wantedTitle = TrackQuery.simplify(query.cleanTitle());
+        String title = TrackQuery.simplify(
+                new TrackQuery(nullToEmpty(string(result, "trackName")), "", "", 0).cleanTitle());
+        if (wantedTitle.isEmpty()) {
+            return false;
+        }
+        if (!artistMustMatch) {
+            // Without the artist to go by, only the exact title is safe enough.
+            return title.equals(wantedTitle);
+        }
+        if (!similar(title, wantedTitle)) {
+            return false;
+        }
+        String wantedArtist = TrackQuery.simplify(query.mainArtist());
+        String artist = TrackQuery.simplify(nullToEmpty(string(result, "artistName")));
+        return !wantedArtist.isEmpty() && (artist.contains(wantedArtist) || wantedArtist.contains(artist) && !artist.isEmpty());
+    }
+
+    /**
+     * Equal, or one starts with the other ("Shape of You" and LRCLIB's "Shape of You [Shape of
+     * You, 2017]"). Not just "contains", which would let "Love" match half the songs there are.
+     */
+    private static boolean similar(String a, String b) {
+        return a.equals(b) || a.startsWith(b) || b.startsWith(a) && a.length() >= 3;
+    }
+
+    private static String nullToEmpty(String text) {
+        return text == null ? "" : text;
     }
 
     static LyricsText toText(JsonObject result) {

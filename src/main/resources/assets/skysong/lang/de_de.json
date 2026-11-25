@@ -151,5 +151,9 @@
   "skysong.settings.gradient_start.tooltip": "Erste Farbe des fließenden Verlaufs.",
   "skysong.settings.gradient_end.tooltip": "Zweite Farbe des fließenden Verlaufs.",
   "skysong.settings.preset.aurora": "Polarlicht",
-  "skysong.settings.preset.prism": "Prisma"
+  "skysong.settings.preset.prism": "Prisma",
+  "skysong.settings.estimate_word_timing": "Wort-Timing schätzen",
+  "skysong.settings.estimate_word_timing.tooltip": "Die meisten Lyrics sagen nur, wann eine Zeile beginnt. An: Wörter leuchten nacheinander zu einer geschätzten Zeit auf, das kann bei langen Tönen vorauslaufen. Aus: die Wörter einer Zeile kommen zusammen. Lyrics mit echtem Wort-Timing laufen immer Wort für Wort.",
+  "skysong.settings.debug_overlay": "Timing-Details",
+  "skysong.settings.debug_overlay.tooltip": "Zeigt oben links, wo der Player den Song gerade sieht, welche Zeit die Lyrics nutzen und welche Lyrics gefunden wurden. Hilft herauszufinden, warum Lyrics zu früh oder zu spät sind."
 }
