@@ -97,6 +97,17 @@ Only a login token is saved, in `.minecraft/config/skysong/spotify.json`. Never 
 The music control keys (play/pause, next, previous, volume) have no key by default; set them
 in Minecraft's Controls under Skysong.
 
+## When the timing is off
+
+Lyrics databases usually have the timing of the album version. A music video with a longer
+intro, or a live version, can be ahead or behind. In the settings (Music tab) you can show
+the lyrics of the song that's playing earlier or later; that's remembered for that song.
+There are also keys for it (*Lyrics earlier* / *Lyrics later*), unbound by default.
+
+Remixes, sped up and slowed versions get the lyrics of the original song, stretched to the
+version's length. For sped up and slowed versions that fits; for other remixes it's a guess,
+so the card says "timing estimated".
+
 ## Where the lyrics come from
 
 1. **Your own files** in `.minecraft/config/skysong/lyrics/`. Name them `Artist - Title.lrc`

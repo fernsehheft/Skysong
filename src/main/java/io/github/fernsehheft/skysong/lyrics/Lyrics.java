@@ -21,6 +21,21 @@ public final class Lyrics {
         this.synced = synced;
     }
 
+    /**
+     * The same lyrics with every timestamp multiplied by {@code scale}. The result counts
+     * as estimated timing, since it's a guess that the version is simply faster or slower.
+     */
+    public Lyrics stretchedBy(double scale) {
+        List<LyricLine> stretched = new ArrayList<>(lines.size());
+        for (LyricLine line : lines) {
+            List<LyricWord> words = line.words().stream()
+                    .map(word -> new LyricWord(Math.round(word.startMs() * scale), word.text()))
+                    .toList();
+            stretched.add(new LyricLine(Math.round(line.startMs() * scale), line.text(), words));
+        }
+        return new Lyrics(stretched, false);
+    }
+
     public List<LyricLine> lines() {
         return lines;
     }

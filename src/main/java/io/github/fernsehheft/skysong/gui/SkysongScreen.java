@@ -1,6 +1,7 @@
 package io.github.fernsehheft.skysong.gui;
 
 import io.github.fernsehheft.skysong.Skysong;
+import io.github.fernsehheft.skysong.SkysongClient;
 import io.github.fernsehheft.skysong.config.LookPreset;
 import io.github.fernsehheft.skysong.config.MusicSource;
 import io.github.fernsehheft.skysong.config.SkysongConfig;
@@ -128,7 +129,7 @@ public final class SkysongScreen extends Screen {
     private double scroll;
     // Also set from the Spotify login's thread when the login is over.
     private volatile boolean rebuildNextTick;
-    private CycleButton<LookPreset> presetButton;
+    private Button presetButton;
 
     /**
      * @param parent the screen to go back to, or null to go back to the game
@@ -210,11 +211,14 @@ public final class SkysongScreen extends Screen {
 
     private void buildLookTab() {
         header("look");
-        presetButton = choice("preset", LookPreset.values(), LookPreset.matching(config), value -> {
-            value.applyTo(config);
+        // A plain button rather than a cycle button: the shown preset follows the settings,
+        // so cycling through "Custom" would land right back on the preset that matches.
+        presetButton = Button.builder(presetLabel(), b -> {
+            LookPreset.next(LookPreset.matching(config)).applyTo(config);
             // Other buttons show values the preset just changed, so build them anew.
             rebuildNextTick = true;
-        });
+        }).size(rowWidth(), ROW_HEIGHT).build();
+        addRow("preset", presetButton);
         color("text_color", config.textColor, value -> config.textColor = value, config::textRgb);
         color("highlight_color", config.highlightColor, value -> config.highlightColor = value, config::highlightRgb);
         choice("karaoke_style", SkysongConfig.KaraokeStyle.values(), config.karaokeStyle, value -> {
@@ -255,6 +259,13 @@ public final class SkysongScreen extends Screen {
         slider("offset", -2000, 2000, 50, config.offsetMs, value -> config.offsetMs = Math.round(value),
                 value -> Component.translatable("skysong.settings.unit.ms", String.format(Locale.ROOT, "%+d", Math.round(value))));
         button("open_lyrics_folder", () -> Util.getPlatform().openFile(lyricsFolder.toFile()));
+
+        header("song_offset");
+        rows.add(new TextRow(this::songOffsetText));
+        button("song_offset.earlier", () -> nudgeSong(SkysongClient.SONG_OFFSET_STEP_MS));
+        button("song_offset.later", () -> nudgeSong(-SkysongClient.SONG_OFFSET_STEP_MS));
+        button("song_offset.reset", () -> hud.playback().now()
+                .ifPresent(moment -> hud.playback().songOffsets().reset(moment.track())));
 
         buildSpotifySection();
 
@@ -321,6 +332,16 @@ public final class SkysongScreen extends Screen {
             case LOGGED_IN -> label("spotify.status.logged_in");
             case FAILED -> Component.translatable("skysong.settings.spotify.status.failed", spotify.problem());
         };
+    }
+
+    private void nudgeSong(long changeMs) {
+        hud.playback().now().ifPresent(moment -> hud.playback().songOffsets().adjust(moment.track(), changeMs));
+    }
+
+    private Component songOffsetText() {
+        return hud.playback().now()
+                .map(moment -> SkysongClient.describeSongOffset(hud.playback().songOffsets().get(moment.track())))
+                .orElse(label("song_offset.nothing_playing"));
     }
 
     private Component playingText() {
@@ -413,9 +434,14 @@ public final class SkysongScreen extends Screen {
         return Component.literal(Math.round(value * 100) + "%");
     }
 
+    private Component presetLabel() {
+        String preset = LookPreset.matching(config).name().toLowerCase(Locale.ROOT);
+        return Component.translatable("skysong.settings.value", label("preset"), label("preset." + preset));
+    }
+
     private void updatePresetButton() {
         if (presetButton != null) {
-            presetButton.setValue(LookPreset.matching(config));
+            presetButton.setMessage(presetLabel());
         }
     }
 

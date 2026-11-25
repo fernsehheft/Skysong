@@ -66,4 +66,20 @@ class LrcParserTest {
         assertEquals(2, lyrics.lineIndexAt(60_000));
         assertTrue(new Lyrics(List.of(), true).lineAt(0).isEmpty());
     }
+
+    @Test
+    void stretchingScalesEveryTimestamp() {
+        Lyrics lyrics = LrcParser.parse("[00:10.00]<00:10.00>Hey <00:12.00>you").stretchedBy(0.5);
+        assertEquals(5000, lyrics.lines().get(0).startMs());
+        assertEquals(6000, lyrics.lines().get(0).words().get(1).startMs());
+        assertFalse(lyrics.synced());
+    }
+
+    @Test
+    void lyricsTextAppliesItsTimeScale() {
+        LyricsText text = LyricsText.synced("[00:20.00]Line").stretchedBy(0.8);
+        assertEquals(16_000, text.toLyrics(0).lines().get(0).startMs());
+        // Old cache files have no scale, which reads as 0 and means "not stretched".
+        assertEquals(20_000, new LyricsText("[00:20.00]Line", null, false, 0).toLyrics(0).lines().get(0).startMs());
+    }
 }

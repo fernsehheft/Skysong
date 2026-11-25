@@ -46,6 +46,16 @@ public enum LookPreset {
         config.depth3d = depth3d;
     }
 
+    /** The preset after {@code current}, going round; {@link #CUSTOM} is skipped, as choosing it changes nothing. */
+    public static LookPreset next(LookPreset current) {
+        LookPreset[] presets = values();
+        int index = current.ordinal();
+        do {
+            index = (index + 1) % presets.length;
+        } while (presets[index] == CUSTOM);
+        return presets[index];
+    }
+
     /** The preset the settings currently match, or {@link #CUSTOM}. */
     public static LookPreset matching(SkysongConfig config) {
         return Arrays.stream(values())

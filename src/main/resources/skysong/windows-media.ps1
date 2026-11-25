@@ -54,8 +54,17 @@ function Get-State {
     # Many players (Spotify too) only refresh the timeline every few seconds,
     # so add the time that passed since they last did.
     $position = $timeline.Position.TotalMilliseconds
+    $duration = $timeline.EndTime.TotalMilliseconds
     if ($playing) {
-        $position += ([DateTimeOffset]::Now - $timeline.LastUpdatedTime).TotalMilliseconds
+        $sinceUpdate = ([DateTimeOffset]::Now - $timeline.LastUpdatedTime).TotalMilliseconds
+        # Some players never fill in LastUpdatedTime (it's then in the year 1). Their position
+        # is as fresh as it gets, so only count time that makes sense for a song.
+        if ($sinceUpdate -gt 0 -and $sinceUpdate -lt 3600000) {
+            $position += $sinceUpdate
+        }
+    }
+    if ($duration -gt 0) {
+        $position = [Math]::Min($position, $duration)
     }
 
     return [ordered]@{
@@ -64,7 +73,7 @@ function Get-State {
         artist     = $properties.Artist
         album      = $properties.AlbumTitle
         positionMs = [long][Math]::Max(0, $position)
-        durationMs = [long]$timeline.EndTime.TotalMilliseconds
+        durationMs = [long]$duration
         playing    = $playing
         app        = $session.SourceAppUserModelId
     }

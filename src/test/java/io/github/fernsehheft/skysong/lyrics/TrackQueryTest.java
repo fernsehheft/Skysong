@@ -1,5 +1,7 @@
 package io.github.fernsehheft.skysong.lyrics;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -37,5 +39,27 @@ class TrackQueryTest {
         assertEquals("beyonce", TrackQuery.simplify("Beyoncé"));
         assertEquals("acdchighwaytohell", TrackQuery.simplify("AC/DC - Highway to Hell"));
         assertEquals("снеговик", TrackQuery.simplify("Снеговик!"));
+    }
+
+    @Test
+    void recognisesAndStripsRemixes() {
+        TrackQuery techno = query("Shape of You (Hard Techno)", "Someone");
+        assertEquals("Shape of You", techno.cleanTitle());
+        assertTrue(techno.isAlternateVersion());
+        assertFalse(techno.isSpeedChange());
+
+        assertEquals("Shape Of You", query("Shape Of You - Hardtekk Remix", "").cleanTitle());
+        assertEquals("Shape of You", query("Shape of You [Techno Version]", "").cleanTitle());
+
+        TrackQuery spedUp = query("Shape of You (Sped Up)", "");
+        assertEquals("Shape of You", spedUp.cleanTitle());
+        assertTrue(spedUp.isSpeedChange());
+    }
+
+    @Test
+    void ordinaryTitlesAreLeftAlone() {
+        assertFalse(query("Shape of You", "Ed Sheeran").isAlternateVersion());
+        // Only cut when it's clearly a note about the version, not part of the name.
+        assertEquals("Mix Tape", query("Mix Tape", "").cleanTitle());
     }
 }

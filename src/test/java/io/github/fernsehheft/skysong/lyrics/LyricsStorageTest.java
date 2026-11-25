@@ -1,5 +1,6 @@
 package io.github.fernsehheft.skysong.lyrics;
 
+import io.github.fernsehheft.skysong.media.NowPlaying;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -57,5 +58,31 @@ class LyricsStorageTest {
         Files.delete(directory.resolve("Snowman.txt"));
         Files.writeString(directory.resolve("whatever.lrc"), "[ar:Sia]\n[ti:Snowman]\n[00:02.00]Tagged");
         assertTrue(folder.find(SONG).orElseThrow().synced().contains("Tagged"));
+    }
+
+    @Test
+    void cacheKeepsTheTimeScale(@TempDir Path directory) throws IOException {
+        LyricsCache cache = new LyricsCache(directory);
+        cache.putFound(SONG, LyricsText.synced("[00:01.00]Hi").stretchedBy(0.75));
+        LyricsCache.Entry entry = cache.get(SONG).orElseThrow();
+        assertEquals(0.75, assertInstanceOf(LyricsCache.Entry.Found.class, entry).text().timeScale());
+    }
+
+    @Test
+    void songOffsetsAreRememberedPerSong(@TempDir Path directory) {
+        Path file = directory.resolve("song-offsets.json");
+        SongOffsets offsets = SongOffsets.load(file);
+        NowPlaying song = new NowPlaying("Shape of You", "Ed Sheeran", "", 0, 0, true, "Test", 0);
+        NowPlaying other = new NowPlaying("Snowman", "Sia", "", 0, 0, true, "Test", 0);
+
+        offsets.adjust(song, -250);
+        offsets.adjust(song, -250);
+        assertEquals(-500, offsets.get(song));
+        assertEquals(0, offsets.get(other));
+        assertEquals(-500, SongOffsets.load(file).get(song));
+
+        offsets.reset(song);
+        assertEquals(0, SongOffsets.load(file).get(song));
+        assertEquals(SongOffsets.LIMIT_MS, offsets.adjust(other, 10 * SongOffsets.LIMIT_MS));
     }
 }

@@ -9,6 +9,7 @@ import io.github.fernsehheft.skysong.lyrics.LrclibClient;
 import io.github.fernsehheft.skysong.lyrics.LyricsCache;
 import io.github.fernsehheft.skysong.lyrics.LyricsPlayback;
 import io.github.fernsehheft.skysong.lyrics.LyricsService;
+import io.github.fernsehheft.skysong.lyrics.SongOffsets;
 import io.github.fernsehheft.skysong.media.MediaSources;
 import io.github.fernsehheft.skysong.media.NowPlayingTracker;
 import io.github.fernsehheft.skysong.media.SwitchableSource;
@@ -34,6 +35,7 @@ import java.util.Optional;
 
 public class SkysongClient implements ClientModInitializer {
     private static final String KEY_CATEGORY = "key.category.skysong";
+    public static final long SONG_OFFSET_STEP_MS = 250;
 
     private static SkysongHud hud;
     private static SkysongConfig config;
@@ -83,7 +85,8 @@ public class SkysongClient implements ClientModInitializer {
             spotify.cancelLogin();
         });
 
-        LyricsPlayback playback = new LyricsPlayback(tracker, lyrics, config);
+        LyricsPlayback playback = new LyricsPlayback(tracker, lyrics, config,
+                SongOffsets.load(Skysong.dataDirectory().resolve("song-offsets.json")));
         WorldLyricsRenderer worldLyrics = new WorldLyricsRenderer(playback, config);
         WorldRenderEvents.LAST.register(worldLyrics::render);
 
@@ -93,6 +96,8 @@ public class SkysongClient implements ClientModInitializer {
         KeyMapping openSettings = KeyBindingHelper.registerKeyBinding(new KeyMapping(
                 "key.skysong.settings", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_K, KEY_CATEGORY));
         KeyMapping toggleLyrics = unboundKey("key.skysong.toggle_lyrics");
+        KeyMapping lyricsEarlier = unboundKey("key.skysong.lyrics_earlier");
+        KeyMapping lyricsLater = unboundKey("key.skysong.lyrics_later");
         Map<KeyMapping, MusicControls.Action> controlKeys = Map.of(
                 unboundKey("key.skysong.play_pause"), MusicControls.Action.PLAY_PAUSE,
                 unboundKey("key.skysong.next"), MusicControls.Action.NEXT,
@@ -107,12 +112,35 @@ public class SkysongClient implements ClientModInitializer {
                 config.worldLyrics = !config.worldLyrics;
                 config.save();
             }
+            while (lyricsEarlier.consumeClick()) {
+                nudgeLyrics(playback, SONG_OFFSET_STEP_MS);
+            }
+            while (lyricsLater.consumeClick()) {
+                nudgeLyrics(playback, -SONG_OFFSET_STEP_MS);
+            }
             controlKeys.forEach((key, action) -> {
                 while (key.consumeClick()) {
                     controls.run(action);
                 }
             });
         });
+    }
+
+    /** Moves the lyrics of the current song earlier (positive) or later, and says so above the hotbar. */
+    private static void nudgeLyrics(LyricsPlayback playback, long changeMs) {
+        playback.now().ifPresent(moment -> {
+            long offset = playback.songOffsets().adjust(moment.track(), changeMs);
+            Minecraft.getInstance().gui.setOverlayMessage(describeSongOffset(offset), false);
+        });
+    }
+
+    /** "Lyrics 0.50 s earlier for this song", or that they're on the song's own timing. */
+    public static Component describeSongOffset(long offsetMs) {
+        if (offsetMs == 0) {
+            return Component.translatable("skysong.song_offset.none");
+        }
+        String seconds = String.format(Locale.ROOT, "%.2f", Math.abs(offsetMs) / 1000.0);
+        return Component.translatable(offsetMs > 0 ? "skysong.song_offset.earlier" : "skysong.song_offset.later", seconds);
     }
 
     /** A key for something most players won't need; they can bind it in Controls. */

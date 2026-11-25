@@ -41,7 +41,8 @@ public final class LyricsCache {
     }
 
     /** The stored JSON. Field names are part of the file format, so don't rename them. */
-    private record Stored(String synced, String plain, boolean instrumental, boolean missing, long savedAt) {
+    private record Stored(String synced, String plain, boolean instrumental, boolean missing, long savedAt,
+                          double timeScale) {
     }
 
     public Optional<Entry> get(TrackQuery query) throws IOException {
@@ -63,15 +64,17 @@ public final class LyricsCache {
             boolean expired = System.currentTimeMillis() - stored.savedAt() > FORGET_MISSING_AFTER_MS;
             return expired ? Optional.empty() : Optional.of(new Entry.Missing());
         }
-        return Optional.of(new Entry.Found(new LyricsText(stored.synced(), stored.plain(), stored.instrumental())));
+        return Optional.of(new Entry.Found(new LyricsText(stored.synced(), stored.plain(), stored.instrumental(),
+                stored.timeScale())));
     }
 
     public void putFound(TrackQuery query, LyricsText text) throws IOException {
-        write(query, new Stored(text.synced(), text.plain(), text.instrumental(), false, System.currentTimeMillis()));
+        write(query, new Stored(text.synced(), text.plain(), text.instrumental(), false, System.currentTimeMillis(),
+                text.timeScale()));
     }
 
     public void putMissing(TrackQuery query) throws IOException {
-        write(query, new Stored(null, null, false, true, System.currentTimeMillis()));
+        write(query, new Stored(null, null, false, true, System.currentTimeMillis(), 1));
     }
 
     private void write(TrackQuery query, Stored stored) throws IOException {

@@ -94,4 +94,16 @@ class SkysongConfigTest {
         assertEquals("#FF8800", SkysongConfig.parseColor(" ff8800 ").orElseThrow());
         assertTrue(SkysongConfig.parseColor("#FF88").isEmpty());
     }
+
+    @Test
+    void thePresetButtonNeverGetsStuck() {
+        // Cycling has to reach every real preset and come back round, skipping "Custom".
+        LookPreset preset = LookPreset.BOLD;
+        for (int i = 0; i < LookPreset.values().length - 1; i++) {
+            preset = LookPreset.next(preset);
+            assertTrue(preset != LookPreset.CUSTOM);
+        }
+        assertEquals(LookPreset.BOLD, preset);
+        assertEquals(LookPreset.CLASSIC, LookPreset.next(LookPreset.CUSTOM));
+    }
 }

@@ -8,14 +8,28 @@ import java.util.List;
  * @param synced       LRC text with timestamps, or null
  * @param plain        lyrics without timing, or null
  * @param instrumental the song is known to have no vocals
+ * @param timeScale    stretch the timestamps by this, for lyrics of the original song used
+ *                     for a faster or slower version of it; 1 (or 0 in old cache files) for none
  */
-public record LyricsText(String synced, String plain, boolean instrumental) {
+public record LyricsText(String synced, String plain, boolean instrumental, double timeScale) {
+    public LyricsText(String synced, String plain, boolean instrumental) {
+        this(synced, plain, instrumental, 1);
+    }
+
     public static LyricsText synced(String lrc) {
         return new LyricsText(lrc, null, false);
     }
 
     public static LyricsText plain(String text) {
         return new LyricsText(null, text, false);
+    }
+
+    public LyricsText stretchedBy(double scale) {
+        return new LyricsText(synced, plain, instrumental, scale);
+    }
+
+    private boolean stretched() {
+        return timeScale > 0 && Math.abs(timeScale - 1) > 0.001;
     }
 
     public boolean hasSynced() {
@@ -31,7 +45,7 @@ public record LyricsText(String synced, String plain, boolean instrumental) {
         if (hasSynced()) {
             Lyrics lyrics = LrcParser.parse(synced);
             if (!lyrics.isEmpty()) {
-                return lyrics;
+                return stretched() ? lyrics.stretchedBy(timeScale) : lyrics;
             }
         }
         if (hasPlain()) {

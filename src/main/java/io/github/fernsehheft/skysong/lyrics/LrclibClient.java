@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import io.github.fernsehheft.skysong.Skysong;
 
 import java.io.IOException;
 import java.net.URI;
@@ -50,6 +51,7 @@ public final class LrclibClient {
         }
         Optional<JsonElement> match = get("/get", exact);
         if (match.isPresent() && match.get().isJsonObject()) {
+            log("exact match", match.get().getAsJsonObject());
             return Optional.of(toText(match.get().getAsJsonObject()));
         }
 
@@ -59,8 +61,48 @@ public final class LrclibClient {
         if (found.isPresent()) {
             return found;
         }
-        // Last try: free text search, which also helps when the title contains the artist.
-        return search(Map.of("q", query.mainArtist() + " " + query.cleanTitle()), query.durationMs());
+        // Free text search, which also helps when the title contains the artist.
+        found = search(Map.of("q", query.mainArtist() + " " + query.cleanTitle()), query.durationMs());
+        if (found.isPresent() || !query.isAlternateVersion() || query.durationMs() <= 0) {
+            return found;
+        }
+        return findOriginalForVersion(query);
+    }
+
+    /**
+     * A remix or a sped up version is shorter or longer than anything LRCLIB has, so we take
+     * the original song's lyrics and stretch their timing to the version's length. For a
+     * version that's only faster or slower that's exact; for other remixes it's a guess.
+     */
+    private Optional<LyricsText> findOriginalForVersion(TrackQuery query) throws IOException {
+        Optional<JsonElement> results = get("/search", Map.of(
+                "track_name", query.cleanTitle(), "artist_name", query.mainArtist()));
+        if (results.isEmpty() || !results.get().isJsonArray() || results.get().getAsJsonArray().isEmpty()) {
+            // Remixes are often released under the remixer's name, so try the title alone.
+            results = get("/search", Map.of("track_name", query.cleanTitle()));
+        }
+        if (results.isEmpty() || !results.get().isJsonArray()) {
+            return Optional.empty();
+        }
+        Optional<JsonObject> original = pickBest(results.get().getAsJsonArray(), 0)
+                .filter(result -> toText(result).hasSynced() && duration(result) > 0);
+        if (original.isEmpty()) {
+            return Optional.empty();
+        }
+        double scale = query.durationMs() / 1000.0 / duration(original.get());
+        log("original for " + (query.isSpeedChange() ? "speed change" : "remix"), original.get());
+        return Optional.of(toText(original.get()).stretchedBy(scale));
+    }
+
+    private static double duration(JsonObject result) {
+        JsonElement duration = result.get("duration");
+        return duration == null || duration.isJsonNull() ? 0 : duration.getAsDouble();
+    }
+
+    private static void log(String what, JsonObject result) {
+        Skysong.LOGGER.info("LRCLIB {}: #{} \"{}\" by {} ({}, {} s)", what,
+                result.has("id") ? result.get("id").getAsString() : "?",
+                string(result, "trackName"), string(result, "artistName"), string(result, "albumName"), duration(result));
     }
 
     private Optional<LyricsText> search(Map<String, String> parameters, long durationMs) throws IOException {
@@ -68,7 +110,9 @@ public final class LrclibClient {
         if (results.isEmpty() || !results.get().isJsonArray()) {
             return Optional.empty();
         }
-        return pickBest(results.get().getAsJsonArray(), durationMs).map(LrclibClient::toText);
+        Optional<JsonObject> best = pickBest(results.get().getAsJsonArray(), durationMs);
+        best.ifPresent(result -> log("search match", result));
+        return best.map(LrclibClient::toText);
     }
 
     /** Prefers results with timestamps, then the one whose length is closest to the song's. */
