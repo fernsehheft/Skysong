@@ -1,11 +1,13 @@
 package io.github.fernsehheft.skysong.hud;
 
+import io.github.fernsehheft.skysong.config.ColorMode;
 import io.github.fernsehheft.skysong.config.SkysongConfig;
 import io.github.fernsehheft.skysong.lyrics.LyricLine;
 import io.github.fernsehheft.skysong.lyrics.LyricsPlayback;
 import io.github.fernsehheft.skysong.lyrics.TimedWord;
 import io.github.fernsehheft.skysong.render.Easing;
 import io.github.fernsehheft.skysong.render.LineLayout;
+import io.github.fernsehheft.skysong.render.LyricColors;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
@@ -28,6 +30,8 @@ final class KaraokeBar implements MovableElement {
             new TimedWord("up", Long.MAX_VALUE), new TimedWord("here", Long.MAX_VALUE));
 
     private final SkysongConfig config;
+    /** Below 1 while fading out for a pause; set by the HUD every frame. */
+    float visibility = 1;
 
     KaraokeBar(SkysongConfig config) {
         this.config = config;
@@ -130,21 +134,32 @@ final class KaraokeBar implements MovableElement {
         HudBox box = HudBox.centeredAt(config.karaokeX, config.karaokeY, width, height,
                 (float) config.karaokeScale, screenWidth, screenHeight);
         float alpha = Easing.easeOut(Easing.progress(content.timeMs() - content.lineStartMs(), FADE_IN_MS));
+        // The editor always shows the bar, paused or not.
+        float shown = preview ? 1 : visibility;
+        if (shown <= 0.01f) {
+            return;
+        }
+        alpha *= shown;
         boolean pill = config.karaokeStyle == SkysongConfig.KaraokeStyle.PILL;
 
         graphics.pose().pushPose();
         graphics.pose().translate(box.x(), box.y(), 0);
         graphics.pose().scale(box.scale(), box.scale(), 1);
         if (pill) {
-            HudDraw.roundedRect(graphics, 0, 0, width, height, 6, HudDraw.withAlpha(BACKGROUND, BACKGROUND_ALPHA));
+            HudDraw.roundedRect(graphics, 0, 0, width, height, 6, HudDraw.withAlpha(BACKGROUND, BACKGROUND_ALPHA * shown));
         }
 
         float centerX = width / 2f;
         float rowsTop = PADDING_Y + content.rows() * ROW_HEIGHT / 2f;
-        for (LineLayout.PlacedWord placed : content.words()) {
+        long clock = System.currentTimeMillis();
+        for (int i = 0; i < content.words().size(); i++) {
+            LineLayout.PlacedWord placed = content.words().get(i);
             long sinceSung = content.timeMs() - placed.word().startMs();
             float sung = Easing.progress(sinceSung, 120);
-            int color = Easing.lerpColor(config.textRgb(), config.highlightRgb(), sung);
+            int base = LyricColors.base(config, i, content.words().size(), clock);
+            int color = config.colorMode == ColorMode.SINGLE
+                    ? Easing.lerpColor(base, config.highlightRgb(), sung)
+                    : LyricColors.afterSinging(base, config.highlightRgb(), sinceSung);
             float wordAlpha = alpha * (0.6f + 0.4f * sung);
             HudDraw.text(graphics, font, placed.word().text(), centerX + placed.x(), rowsTop + placed.y(),
                     HudDraw.withAlpha(color, wordAlpha), !pill);
@@ -155,7 +170,7 @@ final class KaraokeBar implements MovableElement {
             graphics.pose().translate(centerX, PADDING_Y + content.rows() * ROW_HEIGHT + 2, 0);
             graphics.pose().scale(NEXT_LINE_SCALE, NEXT_LINE_SCALE, 1);
             HudDraw.text(graphics, font, content.nextLine(), -font.width(content.nextLine()) / 2f, 0,
-                    HudDraw.withAlpha(NEXT_LINE_COLOR, 1), false);
+                    HudDraw.withAlpha(NEXT_LINE_COLOR, shown), false);
             graphics.pose().popPose();
         }
         graphics.pose().popPose();

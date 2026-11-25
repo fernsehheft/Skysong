@@ -1,6 +1,7 @@
 package io.github.fernsehheft.skysong.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import io.github.fernsehheft.skysong.config.ColorMode;
 import io.github.fernsehheft.skysong.config.SkysongConfig;
 import io.github.fernsehheft.skysong.gui.PreviewArea;
 import io.github.fernsehheft.skysong.lyrics.LyricLine;
@@ -57,6 +58,7 @@ public final class WorldLyricsRenderer {
     private static final long SPARKLE_WINDOW_MS = 300;
 
     private static final long APPEAR_MS = 300;
+    private static final float PAUSE_FADE_MS = 400;
     private static final long LEAVE_MS = 450;
     /** A line disappears this long after its last word, if the next one takes a while. */
     private static final long LINGER_MS = 4000;
@@ -71,6 +73,14 @@ public final class WorldLyricsRenderer {
     private int shownIndex = -1;
     private ShownLine current;
     private ShownLine leaving;
+
+    /**
+     * Fades everything out while the music is paused and back in when it plays again. It
+     * runs on the real clock, as the song's clock stands still during a pause.
+     */
+    private float playingVisibility = 1;
+    private long lastFrameNanos = System.nanoTime();
+    private boolean hiddenByPause;
 
     /** A line that is on screen, with where it was put. */
     private static final class ShownLine {
@@ -104,6 +114,10 @@ public final class WorldLyricsRenderer {
             return;
         }
 
+        if (!followPlayState(moment.track().playing())) {
+            return;
+        }
+
         Lyrics song = moment.lyrics();
         long time = moment.timeMs();
         int index = moment.lineIndex();
@@ -132,6 +146,30 @@ public final class WorldLyricsRenderer {
             draw(pose, buffers, minecraft.font, camera, current, time);
         }
         buffers.endBatch();
+    }
+
+    /**
+     * Fades the lyrics out on pause and in again when the music plays on.
+     *
+     * @return false while there's nothing to draw because of a pause
+     */
+    private boolean followPlayState(boolean playing) {
+        long now = System.nanoTime();
+        float step = (now - lastFrameNanos) / 1_000_000f / PAUSE_FADE_MS;
+        lastFrameNanos = now;
+        playingVisibility = playing ? Math.min(1, playingVisibility + step) : Math.max(0, playingVisibility - step);
+
+        if (!playing && playingVisibility == 0) {
+            hiddenByPause = true;
+            return false;
+        }
+        if (playing && hiddenByPause) {
+            // After a pause the player may be anywhere: start over with the line that's
+            // playing now, put in front of where they're looking now.
+            hiddenByPause = false;
+            clear();
+        }
+        return true;
     }
 
     private void switchLine(Lyrics song, int index, long end, long time, WorldRenderContext context) {
@@ -249,7 +287,7 @@ public final class WorldLyricsRenderer {
     private void draw(PoseStack pose, MultiBufferSource buffers, Font font, Camera camera, ShownLine shown, long time) {
         float appear = Easing.easeOut(Easing.progress(time - shown.line.startMs(), APPEAR_MS));
         float leave = shown == leaving ? Easing.easeOut(Easing.progress(time - shown.leftAt, LEAVE_MS)) : 0;
-        float lineAlpha = appear * (1 - leave);
+        float lineAlpha = appear * (1 - leave) * playingVisibility;
         if (lineAlpha <= 0.02f) {
             return;
         }
@@ -277,7 +315,8 @@ public final class WorldLyricsRenderer {
             look.scale = 1;
             look.offsetX = 0;
             look.offsetY = lineOffsetY;
-            if (animate(look, i, sinceSung, time)) {
+            int base = LyricColors.base(config, i, shown.words.size(), System.currentTimeMillis());
+            if (animate(look, i, base, sinceSung, time)) {
                 drawWord(pose, buffers, font, placed, look);
             }
         }
@@ -291,10 +330,10 @@ public final class WorldLyricsRenderer {
     /**
      * Works out how a word looks for the chosen animation.
      *
+     * @param text the word's colour when it isn't lit up, from the colour mode
      * @return false if the word isn't visible at all right now
      */
-    private boolean animate(WordLook look, int index, long sinceSung, long time) {
-        int text = config.textRgb();
+    private boolean animate(WordLook look, int index, int text, long sinceSung, long time) {
         int highlight = config.highlightRgb();
         switch (config.animation) {
             case KARAOKE -> {
@@ -360,6 +399,10 @@ public final class WorldLyricsRenderer {
             }
             default -> throw new IllegalStateException("Unknown animation " + config.animation);
         }
+        boolean glitching = config.animation == Animation.GLITCH && sinceSung >= 0 && sinceSung < GLITCH_MS;
+        if (config.colorMode != ColorMode.SINGLE && !glitching) {
+            look.color = LyricColors.afterSinging(text, highlight, sinceSung);
+        }
         return true;
     }
 
@@ -387,8 +430,10 @@ public final class WorldLyricsRenderer {
             }
         }
         if (config.glow) {
-            // A halo of see-through copies around the word, in the highlight colour.
-            int halo = withAlpha(config.highlightRgb(), Math.max(5, Math.round(alphaByte * GLOW_ALPHA)));
+            // A halo of see-through copies around the word: in the highlight colour, or with
+            // a gradient or rainbow in the word's own colour, which a white glow would wash out.
+            int glowColor = config.colorMode == ColorMode.SINGLE ? config.highlightRgb() : look.color;
+            int halo = withAlpha(glowColor, Math.max(5, Math.round(alphaByte * GLOW_ALPHA)));
             for (float[] offset : GLOW_OFFSETS) {
                 text(font, look.text, -halfWidth + offset[0], -halfHeight + offset[1], halo, false, pose, buffers);
             }

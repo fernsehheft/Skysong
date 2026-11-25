@@ -2,6 +2,7 @@ package io.github.fernsehheft.skysong.gui;
 
 import io.github.fernsehheft.skysong.Skysong;
 import io.github.fernsehheft.skysong.SkysongClient;
+import io.github.fernsehheft.skysong.config.ColorMode;
 import io.github.fernsehheft.skysong.config.LookPreset;
 import io.github.fernsehheft.skysong.config.MusicSource;
 import io.github.fernsehheft.skysong.config.SkysongConfig;
@@ -219,7 +220,13 @@ public final class SkysongScreen extends Screen {
             rebuildNextTick = true;
         }).size(rowWidth(), ROW_HEIGHT).build();
         addRow("preset", presetButton);
+        choice("color_mode", ColorMode.values(), config.colorMode, value -> {
+            config.colorMode = value;
+            updatePresetButton();
+        });
         color("text_color", config.textColor, value -> config.textColor = value, config::textRgb);
+        color("gradient_start", config.gradientStart, value -> config.gradientStart = value, config::gradientStartRgb);
+        color("gradient_end", config.gradientEnd, value -> config.gradientEnd = value, config::gradientEndRgb);
         color("highlight_color", config.highlightColor, value -> config.highlightColor = value, config::highlightRgb);
         choice("karaoke_style", SkysongConfig.KaraokeStyle.values(), config.karaokeStyle, value -> {
             config.karaokeStyle = value;

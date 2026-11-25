@@ -43,7 +43,7 @@
   "skysong.settings.preset.dreamy": "Dreamy",
   "skysong.settings.preset.bold": "Bold",
   "skysong.settings.text_color": "Text colour",
-  "skysong.settings.text_color.tooltip": "Colour of the words that haven't been sung yet, like #FFFFFF.",
+  "skysong.settings.text_color.tooltip": "Colour of the words that haven't been sung yet, like #FFFFFF. Used with the colour mode \"One colour\".",
   "skysong.settings.highlight_color": "Highlight colour",
   "skysong.settings.highlight_color.tooltip": "Colour of the word being sung, like #FFD966.",
   "skysong.settings.karaoke_style": "Karaoke bar style",
@@ -140,5 +140,16 @@
   "skysong.settings.song_offset.earlier.tooltip": "Moves the lyrics of the song that's playing a quarter second earlier. Remembered for this song only.",
   "skysong.settings.song_offset.later": "Lyrics too early? Show them later",
   "skysong.settings.song_offset.later.tooltip": "Moves the lyrics of the song that's playing a quarter second later. Remembered for this song only.",
-  "skysong.settings.song_offset.reset": "Undo for this song"
+  "skysong.settings.song_offset.reset": "Undo for this song",
+  "skysong.settings.color_mode": "Colours",
+  "skysong.settings.color_mode.single": "One colour",
+  "skysong.settings.color_mode.gradient": "Flowing gradient",
+  "skysong.settings.color_mode.rainbow": "Rainbow",
+  "skysong.settings.color_mode.tooltip": "One colour: the text colour. Flowing gradient: the two gradient colours drift through the line. Rainbow: every colour, slowly moving. The word being sung always lights up in the highlight colour.",
+  "skysong.settings.gradient_start": "Gradient from",
+  "skysong.settings.gradient_end": "Gradient to",
+  "skysong.settings.gradient_start.tooltip": "First colour of the flowing gradient.",
+  "skysong.settings.gradient_end.tooltip": "Second colour of the flowing gradient.",
+  "skysong.settings.preset.aurora": "Aurora",
+  "skysong.settings.preset.prism": "Prism"
 }

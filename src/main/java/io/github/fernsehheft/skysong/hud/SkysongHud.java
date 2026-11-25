@@ -18,6 +18,7 @@ public final class SkysongHud {
     private final KaraokeBar karaokeBar;
     private final NowPlayingCard nowPlayingCard;
     private long lastFrame = System.nanoTime();
+    private static final float PAUSE_FADE_SECONDS = 0.4f;
 
     public SkysongHud(LyricsPlayback playback, SkysongConfig config) {
         this.playback = playback;
@@ -51,6 +52,10 @@ public final class SkysongHud {
         Font font = Minecraft.getInstance().font;
         int height = graphics.guiHeight();
         LyricsPlayback.Moment moment = playback.now().orElse(null);
+        // The karaoke bar fades away while the music is paused and comes back with it.
+        boolean playing = moment != null && moment.track().playing();
+        float step = seconds / PAUSE_FADE_SECONDS;
+        karaokeBar.visibility = playing ? Math.min(1, karaokeBar.visibility + step) : Math.max(0, karaokeBar.visibility - step);
         cinematicBars.render(graphics, graphics.guiWidth(), height, moment, seconds);
 
         // With the settings open, lay everything out in the part of the screen they don't cover.

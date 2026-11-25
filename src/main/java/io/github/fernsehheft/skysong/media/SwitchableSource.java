@@ -48,6 +48,10 @@ public final class SwitchableSource implements MediaSource {
         return Active.SYSTEM;
     }
 
+    public DemoSource demo() {
+        return demo;
+    }
+
     @Override
     public String name() {
         return switch (active()) {

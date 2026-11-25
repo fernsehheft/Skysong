@@ -26,6 +26,8 @@ public final class SkysongConfig {
     private static final Pattern HEX_COLOR = Pattern.compile("#?[0-9a-fA-F]{6}");
     private static final String DEFAULT_TEXT_COLOR = "#FFFFFF";
     private static final String DEFAULT_HIGHLIGHT_COLOR = "#FFD966";
+    private static final String DEFAULT_GRADIENT_START = "#FF7EB3";
+    private static final String DEFAULT_GRADIENT_END = "#7AD7FF";
     public static final double MIN_HUD_SCALE = 0.5;
     public static final double MAX_HUD_SCALE = 3.0;
 
@@ -49,6 +51,10 @@ public final class SkysongConfig {
     public String textColor = DEFAULT_TEXT_COLOR;
     /** Colour of the word being sung. */
     public String highlightColor = DEFAULT_HIGHLIGHT_COLOR;
+    /** Single colour, a flowing gradient, or a rainbow for the words that aren't lit up. */
+    public ColorMode colorMode = ColorMode.SINGLE;
+    public String gradientStart = DEFAULT_GRADIENT_START;
+    public String gradientEnd = DEFAULT_GRADIENT_END;
     /** A soft glow in the highlight colour around the words in the world. */
     public boolean glow = false;
     /** Gives the words in the world some thickness, like letters cut out of a block. */
@@ -144,6 +150,11 @@ public final class SkysongConfig {
         size = clamp(size, 0.25, 4.0);
         textColor = validColor(textColor, DEFAULT_TEXT_COLOR);
         highlightColor = validColor(highlightColor, DEFAULT_HIGHLIGHT_COLOR);
+        gradientStart = validColor(gradientStart, DEFAULT_GRADIENT_START);
+        gradientEnd = validColor(gradientEnd, DEFAULT_GRADIENT_END);
+        if (colorMode == null) {
+            colorMode = ColorMode.SINGLE;
+        }
         offsetMs = Math.max(-5000, Math.min(5000, offsetMs));
         if (musicSource == null) {
             musicSource = MusicSource.AUTO;
@@ -192,6 +203,14 @@ public final class SkysongConfig {
 
     public int highlightRgb() {
         return toRgb(highlightColor);
+    }
+
+    public int gradientStartRgb() {
+        return toRgb(gradientStart);
+    }
+
+    public int gradientEndRgb() {
+        return toRgb(gradientEnd);
     }
 
     private static String validColor(String color, String fallback) {

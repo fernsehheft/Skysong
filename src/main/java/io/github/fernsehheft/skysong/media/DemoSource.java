@@ -27,7 +27,9 @@ public final class DemoSource implements MediaSource {
             """;
 
     private boolean playing = true;
+    private boolean paused;
     private long startedAt = System.nanoTime();
+    private long pausedAt;
 
     public static boolean isDemo(NowPlaying track) {
         return track != null && PLAYER.equals(track.player()) && TITLE.equals(track.title());
@@ -39,24 +41,41 @@ public final class DemoSource implements MediaSource {
     }
 
     /** Starts the demo from the beginning, unless it's already playing. */
-    void restartIfStopped() {
+    synchronized void restartIfStopped() {
         if (!playing) {
             playing = true;
+            paused = false;
             startedAt = System.nanoTime();
         }
     }
 
-    void stop() {
+    /** Pauses the demo, or lets it play on from where it was paused. */
+    public synchronized void togglePause() {
+        long now = System.nanoTime();
+        if (paused) {
+            // Move the start by the length of the pause, so the song continues where it stopped.
+            startedAt += now - pausedAt;
+        } else {
+            pausedAt = now;
+        }
+        paused = !paused;
+    }
+
+    public synchronized boolean paused() {
+        return paused;
+    }
+
+    synchronized void stop() {
         playing = false;
     }
 
     @Override
-    public Optional<NowPlaying> poll() {
+    public synchronized Optional<NowPlaying> poll() {
         if (!playing) {
             return Optional.empty();
         }
         long now = System.nanoTime();
-        long position = ((now - startedAt) / 1_000_000L) % DURATION_MS;
-        return Optional.of(new NowPlaying(TITLE, ARTIST, "", DURATION_MS, position, true, PLAYER, now));
+        long position = (((paused ? pausedAt : now) - startedAt) / 1_000_000L) % DURATION_MS;
+        return Optional.of(new NowPlaying(TITLE, ARTIST, "", DURATION_MS, position, !paused, PLAYER, now));
     }
 }

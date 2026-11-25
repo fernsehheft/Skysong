@@ -120,7 +120,14 @@ public class SkysongClient implements ClientModInitializer {
             }
             controlKeys.forEach((key, action) -> {
                 while (key.consumeClick()) {
-                    controls.run(action);
+                    if (source.active() == SwitchableSource.Active.DEMO && action == MusicControls.Action.PLAY_PAUSE) {
+                        // The demo song can be paused too, to try how the lyrics react.
+                        source.demo().togglePause();
+                        showControlResult(source.demo().paused()
+                                ? MusicControls.Result.PAUSED : MusicControls.Result.PLAYING, "");
+                    } else {
+                        controls.run(action);
+                    }
                 }
             });
         });

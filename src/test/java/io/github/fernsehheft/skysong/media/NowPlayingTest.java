@@ -42,4 +42,20 @@ class NowPlayingTest {
         assertTrue(demo.positionMs() < demo.durationMs());
         assertFalse(LrcParser.parse(DemoSource.LYRICS).isEmpty());
     }
+
+    @Test
+    void demoSongPausesAndPlaysOnFromThere() {
+        DemoSource demo = new DemoSource();
+        demo.togglePause();
+        NowPlaying paused = demo.poll().orElseThrow();
+        assertFalse(paused.playing());
+        long position = paused.positionMs();
+        assertEquals(position, demo.poll().orElseThrow().positionMs());
+
+        demo.togglePause();
+        NowPlaying playing = demo.poll().orElseThrow();
+        assertTrue(playing.playing());
+        // Playing on from where it stopped, not from where it would be without the pause.
+        assertTrue(playing.positionMs() - position < 100);
+    }
 }

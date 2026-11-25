@@ -11,6 +11,8 @@ right inside your Minecraft world.
 - **Eight animations**: karaoke, fade, rise, wave, typewriter, glitch, drop and zoom
 - **Three placements**: straight ahead, scattered around you, or big in the sky
 - **Effects**: glow, 3D letters, sparks flying off every sung word, and a small beat zoom when a new line starts
+- **Colours**: one colour, a flowing gradient between two colours, or a rainbow; the word being sung lights up in its own colour
+- Pause the music and the lyrics fade away; play on and they come back at the right line
 
 ## On screen
 
@@ -29,7 +31,7 @@ Press **K** in game, or use the settings button in [Mod Menu](https://modrinth.c
 if you have it. The settings sit on the left so you can watch every change on the right
 while the music plays. Nothing playing? Turn on the demo song in the Music tab.
 
-Presets give you a ready-made look in one click: Classic, Neon, Sunset, Dreamy and Bold.
+Presets give you a ready-made look in one click: Classic, Neon, Sunset, Dreamy, Bold, Aurora and Prism.
 
 Everything is saved in `.minecraft/config/skysong/settings.json`, which you can also edit by hand:
 
@@ -42,6 +44,8 @@ Everything is saved in `.minecraft/config/skysong/settings.json`, which you can 
 | `distance` | How far away the lyrics are, in blocks (1.5 to 12) | `4.0` |
 | `size` | Text size, 1.0 is normal (0.25 to 4) | `1.0` |
 | `textColor`, `highlightColor` | Colours like `"#FFD966"` | `#FFFFFF`, `#FFD966` |
+| `colorMode` | `SINGLE` (the text colour), `GRADIENT` or `RAINBOW` | `SINGLE` |
+| `gradientStart`, `gradientEnd` | The two colours of the flowing gradient | `#FF7EB3`, `#7AD7FF` |
 | `offsetMs` | Show the lyrics this many milliseconds earlier (negative: later) | `0` |
 | `karaokeBar`, `karaokeStyle` | Show the karaoke bar; style `PILL` (dark background) or `MINIMAL` (just text) | `true`, `PILL` |
 | `nowPlayingCard` | Show the now playing card | `true` |

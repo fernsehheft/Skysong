@@ -43,7 +43,7 @@
   "skysong.settings.preset.dreamy": "Verträumt",
   "skysong.settings.preset.bold": "Kräftig",
   "skysong.settings.text_color": "Textfarbe",
-  "skysong.settings.text_color.tooltip": "Farbe der Wörter, die noch nicht gesungen wurden, z. B. #FFFFFF.",
+  "skysong.settings.text_color.tooltip": "Farbe der Wörter, die noch nicht gesungen wurden, z. B. #FFFFFF. Gilt beim Farbmodus \"Eine Farbe\".",
   "skysong.settings.highlight_color": "Hervorhebung",
   "skysong.settings.highlight_color.tooltip": "Farbe des Wortes, das gerade gesungen wird, z. B. #FFD966.",
   "skysong.settings.karaoke_style": "Stil der Karaoke-Leiste",
@@ -140,5 +140,16 @@
   "skysong.settings.song_offset.earlier.tooltip": "Zeigt die Lyrics des laufenden Songs eine Viertelsekunde früher. Wird nur für diesen Song gespeichert.",
   "skysong.settings.song_offset.later": "Lyrics zu früh? Später zeigen",
   "skysong.settings.song_offset.later.tooltip": "Zeigt die Lyrics des laufenden Songs eine Viertelsekunde später. Wird nur für diesen Song gespeichert.",
-  "skysong.settings.song_offset.reset": "Für diesen Song zurücksetzen"
+  "skysong.settings.song_offset.reset": "Für diesen Song zurücksetzen",
+  "skysong.settings.color_mode": "Farben",
+  "skysong.settings.color_mode.single": "Eine Farbe",
+  "skysong.settings.color_mode.gradient": "Fließender Verlauf",
+  "skysong.settings.color_mode.rainbow": "Regenbogen",
+  "skysong.settings.color_mode.tooltip": "Eine Farbe: die Textfarbe. Fließender Verlauf: die zwei Verlaufsfarben wandern durch die Zeile. Regenbogen: alle Farben, langsam in Bewegung. Das gesungene Wort leuchtet immer in der Hervorhebungsfarbe auf.",
+  "skysong.settings.gradient_start": "Verlauf von",
+  "skysong.settings.gradient_end": "Verlauf bis",
+  "skysong.settings.gradient_start.tooltip": "Erste Farbe des fließenden Verlaufs.",
+  "skysong.settings.gradient_end.tooltip": "Zweite Farbe des fließenden Verlaufs.",
+  "skysong.settings.preset.aurora": "Polarlicht",
+  "skysong.settings.preset.prism": "Prisma"
 }
