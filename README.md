@@ -35,3 +35,9 @@ The mod jar ends up in `build/libs/`. To start a development client:
 | 1.20.1    | Fabric | in development |
 
 Other versions follow once 1.20.1 is complete.
+
+## License
+
+Skysong is licensed under the [GNU General Public License v3.0](LICENSE).
+You're welcome to fork it and change it, but if you share a modified version, it has to
+stay open source under the same license and say what you changed.

@@ -5,6 +5,7 @@
   "name": "Skysong",
   "description": "Synced lyrics of the song you're listening to, right there in your Minecraft world.",
   "authors": ["fernsehheft"],
+  "license": "GPL-3.0-only",
   "contact": {
     "sources": "https://github.com/fernsehheft/Skysong",
     "issues": "https://github.com/fernsehheft/Skysong/issues"
