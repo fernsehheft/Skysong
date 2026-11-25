@@ -8,6 +8,8 @@ import io.github.fernsehheft.skysong.gui.PreviewArea;
 import io.github.fernsehheft.skysong.lyrics.LyricLine;
 import io.github.fernsehheft.skysong.lyrics.Lyrics;
 import io.github.fernsehheft.skysong.lyrics.LyricsPlayback;
+import io.github.fernsehheft.skysong.lyrics.SongStructure;
+import io.github.fernsehheft.skysong.lyrics.TrackQuery;
 import io.github.fernsehheft.skysong.lyrics.TimedWord;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.minecraft.client.Camera;
@@ -25,7 +27,9 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 /**
@@ -40,16 +44,28 @@ public final class WorldLyricsRenderer {
     private static final int ROW_GAP = 3;
     private static final double MAX_SCATTER_DEGREES = 30;
     /**
-     * Lines in the sky are written high up and far away, like skywriting. They're at least
-     * this many degrees above the horizon; looking further up takes them along.
+     * Lines in the sky are written up where the clouds are, far away, like skywriting. They're
+     * at least this many degrees above the horizon; looking further up takes them along.
      */
-    private static final double SKY_MIN_ELEVATION = 18;
+    private static final double SKY_MIN_ELEVATION = 20;
     private static final double SKY_MAX_ELEVATION = 70;
-    private static final double SKY_DISTANCE = 45;
+    /** Even near the cloud layer (or above it), lines stay at least this far overhead. */
+    private static final double SKY_MIN_HEIGHT = 40;
+    /** Keeps lines well inside the view distance when the clouds are far above. */
+    private static final double SKY_MAX_HORIZONTAL = 300;
+    /** Where there are no clouds (Nether, End), lines go this far above the player. */
+    private static final double SKY_HEIGHT_WITHOUT_CLOUDS = 60;
     /** Their size grows with the distance; at this, a long line still fits the view. */
     private static final float SKY_SIZE = 0.8f;
 
     private static final long MS_PER_TYPED_LETTER = 40;
+    private static final float CHORUS_SIZE = 1.15f;
+    private static final float TITLE_SCALE = 1.25f;
+    private static final float TITLE_JUMP = 0.3f;
+    private static final long TITLE_JUMP_MS = 450;
+    private static final float BACKING_SCALE = 0.8f;
+    private static final float BACKING_ALPHA = 0.6f;
+    private static final float HELD_GROWTH = 0.18f;
     private static final long GLITCH_MS = 180;
     private static final String GLITCH_CHARACTERS = "#@%&*?!<>/\\=~";
     private static final int DEPTH_LAYERS = 4;
@@ -84,6 +100,9 @@ public final class WorldLyricsRenderer {
      * runs on the real clock, as the song's clock stands still during a pause.
      */
     private float playingVisibility = 1;
+    /** Which lines of the current song come back, worked out once per song. */
+    private Lyrics repeatedLinesOf;
+    private boolean[] repeatedLines;
     private long lastFrameNanos = System.nanoTime();
     private boolean hiddenByPause;
 
@@ -94,16 +113,24 @@ public final class WorldLyricsRenderer {
         final Vec3 position;
         final float pixelSize;
         final long visibleUntil;
+        /** Per word: part of the song's title, background vocals, how long it's held (null without word timing). */
+        final boolean[] title;
+        final boolean[] backing;
+        final long[] holdMs;
         long leftAt;
         /** How many of the words have already had their sparks. */
         int sparkedWords;
 
-        ShownLine(LyricLine line, List<LineLayout.PlacedWord> words, Vec3 position, float pixelSize, long visibleUntil) {
+        ShownLine(LyricLine line, List<LineLayout.PlacedWord> words, Vec3 position, float pixelSize, long visibleUntil,
+                  boolean[] title, boolean[] backing, long[] holdMs) {
             this.line = line;
             this.words = words;
             this.position = position;
             this.pixelSize = pixelSize;
             this.visibleUntil = visibleUntil;
+            this.title = title;
+            this.backing = backing;
+            this.holdMs = holdMs;
         }
     }
 
@@ -127,7 +154,7 @@ public final class WorldLyricsRenderer {
         long time = moment.timeMs();
         int index = moment.lineIndex();
         if (song != shownLyrics || index != shownIndex) {
-            switchLine(song, index, moment.lineEndMs(), time, context);
+            switchLine(song, index, moment.lineEndMs(), time, moment.track().title(), context);
         }
         if (current != null && time >= current.visibleUntil) {
             startLeaving(current, current.visibleUntil);
@@ -185,7 +212,7 @@ public final class WorldLyricsRenderer {
         return true;
     }
 
-    private void switchLine(Lyrics song, int index, long end, long time, WorldRenderContext context) {
+    private void switchLine(Lyrics song, int index, long end, long time, String trackTitle, WorldRenderContext context) {
         if (current != null) {
             startLeaving(current, time);
         }
@@ -206,9 +233,31 @@ public final class WorldLyricsRenderer {
         }
         long lastWord = words.get(words.size() - 1).startMs();
 
+        int count = words.size();
+        boolean react = config.reactToSong;
+        List<String> texts = words.stream().map(TimedWord::text).toList();
+        boolean[] title = react
+                ? SongStructure.titleWords(texts, new TrackQuery(trackTitle, "", "", 0).cleanTitle())
+                : new boolean[count];
+        boolean[] backing = react ? SongStructure.backingWords(texts) : new boolean[count];
+        long[] holdMs = react && song.wordTimed() ? SongStructure.wordLengths(words, end) : null;
+        if (react && song != repeatedLinesOf) {
+            repeatedLinesOf = song;
+            repeatedLines = SongStructure.repeatedLines(song);
+        }
+        boolean chorus = react && repeatedLines[index];
+
+        // Words that will be drawn bigger or smaller get more or less room in the line.
         Font font = Minecraft.getInstance().font;
-        List<LineLayout.PlacedWord> placed = LineLayout.layout(
-                words, font::width, font.width(" "), MAX_ROW_WIDTH, font.lineHeight + ROW_GAP);
+        Map<TimedWord, Integer> indexOf = new IdentityHashMap<>();
+        for (int i = 0; i < count; i++) {
+            indexOf.put(words.get(i), i);
+        }
+        List<LineLayout.PlacedWord> placed = LineLayout.layoutWithWidths(words, word -> {
+            int i = indexOf.get(word);
+            return Math.round(config.font.width(font, word.text())
+                    * roomFor(title[i], backing[i], holdMs != null && holdMs[i] > SongStructure.HELD_NOTE_MS));
+        }, config.font.width(font, " "), MAX_ROW_WIDTH, font.lineHeight + ROW_GAP);
 
         Vec3 eye = context.camera().getPosition();
         Vec3 position = placeLine(context.camera(), context.world());
@@ -216,11 +265,15 @@ public final class WorldLyricsRenderer {
         if (config.placement == Placement.SKY) {
             pixelSize *= SKY_SIZE;
         }
+        if (chorus) {
+            pixelSize *= CHORUS_SIZE;
+        }
         // Only for a line that starts now, not when joining in the middle of one.
         if (config.beatZoom && time - line.startMs() < APPEAR_MS) {
             BeatZoom.kick();
         }
-        current = new ShownLine(line, placed, position, pixelSize, Math.min(end, lastWord + LINGER_MS));
+        current = new ShownLine(line, placed, position, pixelSize, Math.min(end, lastWord + LINGER_MS),
+                title, backing, holdMs);
     }
 
     private void startLeaving(ShownLine line, long time) {
@@ -237,7 +290,7 @@ public final class WorldLyricsRenderer {
 
     private Vec3 placeLine(Camera camera, ClientLevel level) {
         if (config.placement == Placement.SKY) {
-            return skyPlace(camera);
+            return skyPlace(camera, level);
         }
         double yaw = camera.getYRot();
         double distance = config.distance;
@@ -261,13 +314,17 @@ public final class WorldLyricsRenderer {
      * High up in the direction the player faces. Nothing is pulled out of the way here: the
      * sky is far beyond any wall, and a tree in between doesn't make the lyrics any less "up there".
      */
-    private static Vec3 skyPlace(Camera camera) {
+    private static Vec3 skyPlace(Camera camera, ClientLevel level) {
+        Vec3 eye = camera.getPosition();
+        double cloudHeight = level == null ? Double.NaN : level.effects().getCloudHeight();
+        double above = Double.isNaN(cloudHeight)
+                ? SKY_HEIGHT_WITHOUT_CLOUDS
+                : Math.max(SKY_MIN_HEIGHT, cloudHeight - eye.y);
         // Minecraft's pitch is negative when looking up.
-        double elevation = Math.max(SKY_MIN_ELEVATION, Math.min(SKY_MAX_ELEVATION, -camera.getXRot()));
+        double elevation = Math.toRadians(Math.max(SKY_MIN_ELEVATION, Math.min(SKY_MAX_ELEVATION, -camera.getXRot())));
+        double horizontal = Math.min(SKY_MAX_HORIZONTAL, above / Math.tan(elevation));
         double yaw = Math.toRadians(camera.getYRot() + previewYawShift());
-        double up = Math.toRadians(elevation);
-        Vec3 direction = new Vec3(-Math.sin(yaw) * Math.cos(up), Math.sin(up), Math.cos(yaw) * Math.cos(up));
-        return camera.getPosition().add(direction.scale(SKY_DISTANCE));
+        return eye.add(-Math.sin(yaw) * horizontal, above, Math.cos(yaw) * horizontal);
     }
 
     /**
@@ -343,6 +400,7 @@ public final class WorldLyricsRenderer {
             look.offsetY = lineOffsetY;
             int base = LyricColors.base(config, i, shown.words.size(), System.currentTimeMillis());
             if (animate(look, i, base, sinceSung, time)) {
+                react(look, shown, i, sinceSung);
                 drawWord(pose, buffers, font, placed, look);
             }
         }
@@ -432,16 +490,56 @@ public final class WorldLyricsRenderer {
         return true;
     }
 
+    /** Room a word gets in the line, matching how big {@link #react} draws it at most. */
+    private static float roomFor(boolean title, boolean backing, boolean held) {
+        float room = 1;
+        if (title) {
+            room *= TITLE_SCALE;
+        }
+        if (backing) {
+            room *= BACKING_SCALE;
+        }
+        if (held) {
+            room *= 1 + HELD_GROWTH;
+        }
+        return room;
+    }
+
+    /**
+     * Makes the words react to the song: the title stands out and jumps when it's sung,
+     * background vocals step back, and a held note grows for as long as it's held.
+     */
+    private void react(WordLook look, ShownLine shown, int index, long sinceSung) {
+        if (shown.title[index]) {
+            look.scale *= TITLE_SCALE;
+            if (sinceSung >= 0) {
+                look.scale *= 1 + TITLE_JUMP * Easing.bump(Easing.progress(sinceSung, TITLE_JUMP_MS));
+                look.color = config.highlightRgb();
+            }
+        }
+        if (shown.backing[index]) {
+            look.scale *= BACKING_SCALE;
+            look.alpha *= BACKING_ALPHA;
+        }
+        if (shown.holdMs != null && shown.holdMs[index] > SongStructure.HELD_NOTE_MS && sinceSung >= 0) {
+            float held = Easing.progress(sinceSung, shown.holdMs[index]);
+            // Grows while the note is held and settles back once the next word comes.
+            look.scale *= 1 + HELD_GROWTH * (sinceSung <= shown.holdMs[index] ? Easing.easeOut(held) : 0);
+        }
+    }
+
     private void drawWord(PoseStack pose, MultiBufferSource buffers, Font font, LineLayout.PlacedWord placed, WordLook look) {
         // Minecraft draws text with an alpha below 4 as fully opaque, so skip those.
         int alphaByte = Math.round(look.alpha * 255);
         if (alphaByte < 5) {
             return;
         }
-        float halfWidth = placed.width() / 2f;
+        // The word is centred in its room, which can be wider than the word itself. Measured on
+        // the whole word, so a word being typed out grows from its first letter.
+        float halfWidth = config.font.width(font, placed.word().text()) / 2f;
         float halfHeight = font.lineHeight / 2f;
         pose.pushPose();
-        pose.translate(placed.x() + halfWidth + look.offsetX, placed.y() + halfHeight + look.offsetY, 0);
+        pose.translate(placed.x() + placed.width() / 2f + look.offsetX, placed.y() + halfHeight + look.offsetY, 0);
         pose.scale(look.scale, look.scale, 1);
 
         if (config.depth3d) {
@@ -484,7 +582,8 @@ public final class WorldLyricsRenderer {
                       PoseStack pose, MultiBufferSource buffers) {
         // Writing in the sky stays in front of trees and hills, like a nametag seen through a wall.
         Font.DisplayMode mode = config.placement == Placement.SKY ? Font.DisplayMode.SEE_THROUGH : Font.DisplayMode.NORMAL;
-        font.drawInBatch(text, x, y, argb, shadow, pose.last().pose(), buffers, mode, 0, LightTexture.FULL_BRIGHT);
+        font.drawInBatch(config.font.text(text), x, y, argb, shadow, pose.last().pose(), buffers, mode, 0,
+                LightTexture.FULL_BRIGHT);
     }
 
     /** Sends a few sparks off every word at the moment it's sung. */

@@ -46,7 +46,8 @@ final class TitleIntro {
             return;
         }
 
-        float titleScale = Math.min(TITLE_SCALE, screenWidth * MAX_WIDTH_SHARE / Math.max(1, font.width(track.title())));
+        int titleWidth = config.font.width(font, track.title());
+        float titleScale = Math.min(TITLE_SCALE, screenWidth * MAX_WIDTH_SHARE / Math.max(1, titleWidth));
         float centerX = screenWidth / 2f;
         // Below the crosshair, so it doesn't cover lyrics floating straight ahead.
         // It drifts up a little while fading in.
@@ -55,7 +56,7 @@ final class TitleIntro {
         graphics.pose().pushPose();
         graphics.pose().translate(centerX, top, 0);
         graphics.pose().scale(titleScale, titleScale, 1);
-        HudDraw.text(graphics, font, track.title(), -font.width(track.title()) / 2f, 0,
+        HudDraw.text(graphics, font, config.font.text(track.title()), -titleWidth / 2f, 0,
                 HudDraw.withAlpha(config.textRgb(), alpha), true);
         graphics.pose().popPose();
 

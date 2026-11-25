@@ -155,5 +155,16 @@
   "skysong.settings.estimate_word_timing": "Wort-Timing schätzen",
   "skysong.settings.estimate_word_timing.tooltip": "Die meisten Lyrics sagen nur, wann eine Zeile beginnt. An: Wörter leuchten nacheinander zu einer geschätzten Zeit auf, das kann bei langen Tönen vorauslaufen. Aus: die Wörter einer Zeile kommen zusammen. Lyrics mit echtem Wort-Timing laufen immer Wort für Wort.",
   "skysong.settings.debug_overlay": "Timing-Details",
-  "skysong.settings.debug_overlay.tooltip": "Zeigt oben links, wo der Player den Song gerade sieht, welche Zeit die Lyrics nutzen und welche Lyrics gefunden wurden. Hilft herauszufinden, warum Lyrics zu früh oder zu spät sind."
+  "skysong.settings.debug_overlay.tooltip": "Zeigt oben links, wo der Player den Song gerade sieht, welche Zeit die Lyrics nutzen und welche Lyrics gefunden wurden. Hilft herauszufinden, warum Lyrics zu früh oder zu spät sind.",
+  "skysong.settings.react_to_song": "Auf den Song reagieren",
+  "skysong.settings.react_to_song.tooltip": "Der Refrain wird größer, der Songtitel sticht hervor und springt beim Singen, Background-Gesang in Klammern tritt zurück, und lang gehaltene Töne wachsen mit (bei Wort-Timing).",
+  "skysong.settings.font": "Schrift",
+  "skysong.settings.font.minecraft": "Minecraft",
+  "skysong.settings.font.smooth": "Glatt",
+  "skysong.settings.font.bold": "Kräftig",
+  "skysong.settings.font.script": "Schreibschrift",
+  "skysong.settings.font.elegant": "Elegant",
+  "skysong.settings.font.retro": "Retro",
+  "skysong.settings.font.mono": "Mono",
+  "skysong.settings.font.tooltip": "Die Schrift der Lyrics in der Welt, der Karaoke-Leiste und des Titel-Intros."
 }

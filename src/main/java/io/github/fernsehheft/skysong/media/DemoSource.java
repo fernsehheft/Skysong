@@ -7,23 +7,25 @@ import java.util.Optional;
  * without any music running. There's no audio, only the timing and the lyrics.
  */
 public final class DemoSource implements MediaSource {
-    public static final String TITLE = "Skysong Demo";
-    public static final String ARTIST = "Skysong";
+    public static final String TITLE = "Skysong";
+    public static final String ARTIST = "Skysong Demo";
     public static final String PLAYER = "Demo";
     private static final long DURATION_MS = 32_000;
+    // The lyrics are written to show off what Skysong can do: "Skysong" is the title and
+    // comes back in the chorus, "(oh-oh)" are background vocals and "loud" is a held note.
 
     public static final String LYRICS = """
-            [ti:Skysong Demo]
-            [ar:Skysong]
+            [ti:Skysong]
+            [ar:Skysong Demo]
             [00:02.00]Look up, the night is open wide
             [00:05.50]A thousand blocks of starlight
-            [00:09.00]We build it higher, line by line
+            [00:09.00]Skysong, shining through the dark
             [00:12.50]Until the sky is yours and mine
-            [00:16.00]<00:16.00>Sing <00:16.60>it <00:17.00>out <00:17.60>loud
-            [00:18.50]Let the words light up the clouds
-            [00:22.00]Every word a little spark
-            [00:25.50]Skysong, shining through the dark
-            [00:29.50]
+            [00:16.00]<00:16.00>Sing <00:16.50>it <00:16.90>out <00:17.30>loud<00:19.40>
+            [00:19.50]Let the words light up the clouds (oh-oh)
+            [00:23.00]Every word a little spark
+            [00:26.50]Skysong, shining through the dark
+            [00:30.00]
             """;
 
     private boolean playing = true;

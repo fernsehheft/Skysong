@@ -155,5 +155,16 @@
   "skysong.settings.estimate_word_timing": "Guess word timing",
   "skysong.settings.estimate_word_timing.tooltip": "Most lyrics only say when each line starts. On: words light up one by one at a guessed time, which can run ahead when a note is held. Off: a line's words come together. Lyrics with real word timing always go word by word.",
   "skysong.settings.debug_overlay": "Timing details",
-  "skysong.settings.debug_overlay.tooltip": "Shows in the top left where the player says the song is, which time the lyrics use, and which lyrics were found. Helps to find out why lyrics are early or late."
+  "skysong.settings.debug_overlay.tooltip": "Shows in the top left where the player says the song is, which time the lyrics use, and which lyrics were found. Helps to find out why lyrics are early or late.",
+  "skysong.settings.react_to_song": "React to the song",
+  "skysong.settings.react_to_song.tooltip": "The chorus is drawn bigger, the song's title stands out and jumps when it's sung, background vocals in brackets step back, and held notes grow while they're held (with word timing).",
+  "skysong.settings.font": "Font",
+  "skysong.settings.font.minecraft": "Minecraft",
+  "skysong.settings.font.smooth": "Smooth",
+  "skysong.settings.font.bold": "Bold",
+  "skysong.settings.font.script": "Script",
+  "skysong.settings.font.elegant": "Elegant",
+  "skysong.settings.font.retro": "Retro",
+  "skysong.settings.font.mono": "Mono",
+  "skysong.settings.font.tooltip": "The font of the lyrics in the world, the karaoke bar and the title intro."
 }

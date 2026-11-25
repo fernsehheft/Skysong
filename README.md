@@ -9,7 +9,9 @@ right inside your Minecraft world.
 ## In the world
 
 - **Eight animations**: karaoke, fade, rise, wave, typewriter, glitch, drop and zoom
-- **Three placements**: straight ahead, scattered around you, or high up in the sky (look up and they follow)
+- **Three placements**: straight ahead, scattered around you, or up in the sky where the clouds are (look up and they follow)
+- **Reacting to the song**: the chorus is drawn bigger, the song's title stands out and jumps when it's sung, background vocals in brackets step back, and held notes grow
+- **Seven fonts**: Minecraft's own plus six free fonts (see [Credits](#credits))
 - **Effects**: glow, 3D letters, sparks flying off every sung word, and a small beat zoom when a new line starts
 - **Colours**: one colour, a flowing gradient between two colours, or a rainbow; the word being sung lights up in its own colour
 - Pause the music and the lyrics fade away; play on and they come back at the right line
@@ -40,6 +42,8 @@ Everything is saved in `.minecraft/config/skysong/settings.json`, which you can 
 | `worldLyrics` | Show the lyrics in the world (also on a key you can bind in Controls) | `true` |
 | `placement` | `AHEAD` (in front of you), `SCATTERED` (a new spot around you for every line) or `SKY` | `AHEAD` |
 | `animation` | `KARAOKE`, `FADE`, `RISE`, `WAVE`, `TYPEWRITER`, `GLITCH`, `DROP` or `ZOOM` | `KARAOKE` |
+| `font` | `MINECRAFT`, `SMOOTH`, `BOLD`, `SCRIPT`, `ELEGANT`, `RETRO` or `MONO` | `MINECRAFT` |
+| `reactToSong` | Bigger chorus, title words standing out, smaller background vocals, growing held notes | `true` |
 | `glow`, `depth3d`, `sparkles`, `beatZoom` | Effects for the lyrics in the world | `false`, `false`, `true`, `true` |
 | `distance` | How far away the lyrics are, in blocks (1.5 to 12) | `4.0` |
 | `size` | Text size, 1.0 is normal (0.25 to 4) | `1.0` |
@@ -129,6 +133,12 @@ so the card says "timing estimated".
    (with timestamps) or `Title.txt` (plain text). A README in that folder explains the format.
 2. **[LRCLIB](https://lrclib.net)**, a free and open lyrics database. Downloaded lyrics are
    kept in `.minecraft/config/skysong/cache/`, so songs you've heard before work offline.
+
+## Credits
+
+The fonts come from [Google Fonts](https://fonts.google.com) under the SIL Open Font License,
+which is included next to them in `assets/skysong/font/licenses`: Poppins, Bebas Neue,
+Pacifico, DM Serif Display, Press Start 2P and Space Mono.
 
 ## License
 

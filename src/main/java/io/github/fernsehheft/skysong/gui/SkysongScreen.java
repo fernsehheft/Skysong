@@ -10,6 +10,7 @@ import io.github.fernsehheft.skysong.hud.HudEditScreen;
 import io.github.fernsehheft.skysong.hud.SkysongHud;
 import io.github.fernsehheft.skysong.lyrics.LyricsPlayback;
 import io.github.fernsehheft.skysong.render.Animation;
+import io.github.fernsehheft.skysong.render.LyricFont;
 import io.github.fernsehheft.skysong.render.Placement;
 import io.github.fernsehheft.skysong.spotify.Spotify;
 import io.github.fernsehheft.skysong.spotify.SpotifyAccount;
@@ -204,6 +205,7 @@ public final class SkysongScreen extends Screen {
         });
         slider("distance", 1.5, 12, 0.5, config.distance, value -> config.distance = value,
                 value -> Component.translatable("skysong.settings.unit.blocks", String.format(Locale.ROOT, "%.1f", value)));
+        toggle("react_to_song", config.reactToSong, value -> config.reactToSong = value);
         slider("size", 0.25, 4, 0.05, config.size, value -> {
             config.size = value;
             updatePresetButton();
@@ -220,6 +222,7 @@ public final class SkysongScreen extends Screen {
             rebuildNextTick = true;
         }).size(rowWidth(), ROW_HEIGHT).build();
         addRow("preset", presetButton);
+        choice("font", LyricFont.values(), config.font, value -> config.font = value);
         choice("color_mode", ColorMode.values(), config.colorMode, value -> {
             config.colorMode = value;
             updatePresetButton();

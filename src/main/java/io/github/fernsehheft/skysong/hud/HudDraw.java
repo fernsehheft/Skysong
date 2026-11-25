@@ -2,6 +2,8 @@ package io.github.fernsehheft.skysong.hud;
 
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Style;
+import net.minecraft.util.FormattedCharSequence;
 
 /** Small drawing helpers for the HUD elements. */
 final class HudDraw {
@@ -23,6 +25,10 @@ final class HudDraw {
 
     /** Draws text at a position that doesn't have to be a whole pixel, which centred text often isn't. */
     static void text(GuiGraphics graphics, Font font, String text, float x, float y, int color, boolean shadow) {
+        text(graphics, font, FormattedCharSequence.forward(text, Style.EMPTY), x, y, color, shadow);
+    }
+
+    static void text(GuiGraphics graphics, Font font, FormattedCharSequence text, float x, float y, int color, boolean shadow) {
         graphics.pose().pushPose();
         graphics.pose().translate(x, y, 0);
         graphics.drawString(font, text, 0, 0, color, shadow);

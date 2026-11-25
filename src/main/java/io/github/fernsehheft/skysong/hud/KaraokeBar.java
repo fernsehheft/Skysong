@@ -78,7 +78,8 @@ final class KaraokeBar implements MovableElement {
             return null;
         }
 
-        List<LineLayout.PlacedWord> placed = LineLayout.layout(words, font::width, font.width(" "), MAX_ROW_WIDTH, ROW_HEIGHT);
+        List<LineLayout.PlacedWord> placed = LineLayout.layout(words, text -> config.font.width(font, text),
+                config.font.width(font, " "), MAX_ROW_WIDTH, ROW_HEIGHT);
         int textWidth = 0;
         int rows = 0;
         float lastY = Float.NaN;
@@ -161,7 +162,7 @@ final class KaraokeBar implements MovableElement {
                     ? Easing.lerpColor(base, config.highlightRgb(), sung)
                     : LyricColors.afterSinging(base, config.highlightRgb(), sinceSung);
             float wordAlpha = alpha * (0.6f + 0.4f * sung);
-            HudDraw.text(graphics, font, placed.word().text(), centerX + placed.x(), rowsTop + placed.y(),
+            HudDraw.text(graphics, font, config.font.text(placed.word().text()), centerX + placed.x(), rowsTop + placed.y(),
                     HudDraw.withAlpha(color, wordAlpha), !pill);
         }
 

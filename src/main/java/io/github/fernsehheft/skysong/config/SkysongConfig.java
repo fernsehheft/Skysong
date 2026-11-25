@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
 import io.github.fernsehheft.skysong.Skysong;
 import io.github.fernsehheft.skysong.render.Animation;
+import io.github.fernsehheft.skysong.render.LyricFont;
 import io.github.fernsehheft.skysong.render.Placement;
 
 import java.io.IOException;
@@ -55,6 +56,8 @@ public final class SkysongConfig {
     public ColorMode colorMode = ColorMode.SINGLE;
     public String gradientStart = DEFAULT_GRADIENT_START;
     public String gradientEnd = DEFAULT_GRADIENT_END;
+    /** The font the lyrics are written in. */
+    public LyricFont font = LyricFont.MINECRAFT;
     /** A soft glow in the highlight colour around the words in the world. */
     public boolean glow = false;
     /** Gives the words in the world some thickness, like letters cut out of a block. */
@@ -69,6 +72,11 @@ public final class SkysongConfig {
      * a guessed time; off, a line's words come together. Real word timing is always used.
      */
     public boolean estimateWordTiming = false;
+    /**
+     * Lyrics react to the song: the chorus is bigger, the song's title stands out when it's
+     * sung, background vocals are smaller and held notes grow.
+     */
+    public boolean reactToSong = true;
     /** Shows the timing details on screen, to find out why lyrics are early or late. */
     public boolean debugOverlay = false;
 
@@ -164,6 +172,9 @@ public final class SkysongConfig {
             colorMode = ColorMode.SINGLE;
         }
         offsetMs = Math.max(-5000, Math.min(5000, offsetMs));
+        if (font == null) {
+            font = LyricFont.MINECRAFT;
+        }
         if (musicSource == null) {
             musicSource = MusicSource.AUTO;
         }
