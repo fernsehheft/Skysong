@@ -2,12 +2,16 @@ package io.github.fernsehheft.skysong.gui;
 
 import io.github.fernsehheft.skysong.Skysong;
 import io.github.fernsehheft.skysong.config.LookPreset;
+import io.github.fernsehheft.skysong.config.MusicSource;
 import io.github.fernsehheft.skysong.config.SkysongConfig;
 import io.github.fernsehheft.skysong.hud.HudEditScreen;
 import io.github.fernsehheft.skysong.hud.SkysongHud;
 import io.github.fernsehheft.skysong.lyrics.LyricsPlayback;
 import io.github.fernsehheft.skysong.render.Animation;
 import io.github.fernsehheft.skysong.render.Placement;
+import io.github.fernsehheft.skysong.spotify.Spotify;
+import io.github.fernsehheft.skysong.spotify.SpotifyAccount;
+import io.github.fernsehheft.skysong.spotify.SpotifyApi;
 import net.minecraft.Util;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -49,6 +53,7 @@ public final class SkysongScreen extends Screen {
     private static final int COLOR_FIELD_WIDTH = 64;
     private static final int SWATCH_SIZE = 16;
     private static final int SCROLL_SPEED = 16;
+    private static final String SPOTIFY_DASHBOARD = "https://developer.spotify.com/dashboard";
 
     private static final int PANEL_COLOR = 0xD0101018;
     private static final int TITLE_COLOR = 0xFFFFFFFF;
@@ -76,10 +81,22 @@ public final class SkysongScreen extends Screen {
         }
     }
 
-    private record ColorRow(Component label, EditBox field, Supplier<Integer> rgb) implements Row {
+    /**
+     * A text field. With a label it sits on the right next to it, without one it fills
+     * the row. {@code rgb} adds a colour swatch for colour fields.
+     */
+    private record FieldRow(Component label, EditBox field, int fieldWidth, Supplier<Integer> rgb) implements Row {
         @Override
         public int height() {
             return ROW_HEIGHT;
+        }
+    }
+
+    /** A longer explanation that wraps over several lines. */
+    private record WrappedTextRow(List<FormattedCharSequence> lines, int lineHeight) implements Row {
+        @Override
+        public int height() {
+            return lines.size() * lineHeight;
         }
     }
 
@@ -104,22 +121,25 @@ public final class SkysongScreen extends Screen {
     private final SkysongConfig config;
     private final SkysongHud hud;
     private final Path lyricsFolder;
+    private final Spotify spotify;
     private final List<Row> rows = new ArrayList<>();
 
     private Tab tab = lastTab;
     private double scroll;
-    private boolean rebuildNextTick;
+    // Also set from the Spotify login's thread when the login is over.
+    private volatile boolean rebuildNextTick;
     private CycleButton<LookPreset> presetButton;
 
     /**
      * @param parent the screen to go back to, or null to go back to the game
      */
-    public SkysongScreen(Screen parent, SkysongConfig config, SkysongHud hud, Path lyricsFolder) {
+    public SkysongScreen(Screen parent, SkysongConfig config, SkysongHud hud, Path lyricsFolder, Spotify spotify) {
         super(Component.translatable("skysong.settings.title"));
         this.parent = parent;
         this.config = config;
         this.hud = hud;
         this.lyricsFolder = lyricsFolder;
+        this.spotify = spotify;
     }
 
     private int panelWidth() {
@@ -218,11 +238,77 @@ public final class SkysongScreen extends Screen {
         header("music");
         rows.add(new TextRow(this::playingText));
         rows.add(new TextRow(this::lyricsText));
+        choice("music_source", MusicSource.values(), config.musicSource, value -> config.musicSource = value);
         toggle("demo_song", config.demoSong, value -> config.demoSong = value);
         slider("offset", -2000, 2000, 50, config.offsetMs, value -> config.offsetMs = Math.round(value),
                 value -> Component.translatable("skysong.settings.unit.ms", String.format(Locale.ROOT, "%+d", Math.round(value))));
         button("open_lyrics_folder", () -> Util.getPlatform().openFile(lyricsFolder.toFile()));
+
+        buildSpotifySection();
+
+        header("other");
         button("reset", this::confirmReset);
+    }
+
+    private void buildSpotifySection() {
+        header("spotify");
+        rows.add(new TextRow(this::spotifyStatusText));
+        Spotify.LoginStatus status = spotify.status();
+        if (status == Spotify.LoginStatus.LOGGED_IN) {
+            button("spotify.log_out", () -> {
+                spotify.logOut();
+                rebuildNextTick = true;
+            });
+            return;
+        }
+
+        wrappedText("spotify.help");
+        button("spotify.open_dashboard", () -> Util.getPlatform().openUri(SPOTIFY_DASHBOARD));
+        Button copy = Button.builder(label("spotify.copy_redirect"), b -> {
+            minecraft.keyboardHandler.setClipboard(SpotifyApi.REDIRECT_URI);
+            b.setMessage(label("spotify.copied"));
+        }).size(rowWidth(), ROW_HEIGHT).build();
+        addRow("spotify.copy_redirect", copy);
+        rows.add(new TextRow(() -> Component.literal(SpotifyApi.REDIRECT_URI)));
+
+        rows.add(new TextRow(() -> label("spotify.client_id")));
+        Button logIn = Button.builder(label("spotify.log_in"), b -> logIn())
+                .size(rowWidth(), ROW_HEIGHT).build();
+        EditBox clientId = new EditBox(font, 0, 0, rowWidth(), ROW_HEIGHT, label("spotify.client_id"));
+        clientId.setMaxLength(64);
+        clientId.setValue(spotify.account().clientId());
+        clientId.setHint(label("spotify.client_id.hint"));
+        clientId.setResponder(text -> {
+            boolean valid = SpotifyAccount.looksLikeClientId(text);
+            if (valid) {
+                spotify.account().setClientId(text);
+            }
+            logIn.active = valid && spotify.status() != Spotify.LoginStatus.WAITING;
+        });
+        logIn.active = SpotifyAccount.looksLikeClientId(clientId.getValue()) && status != Spotify.LoginStatus.WAITING;
+        addRenderableWidget(clientId);
+        rows.add(new FieldRow(null, clientId, rowWidth(), null));
+        addRow("spotify.log_in", logIn);
+        if (status == Spotify.LoginStatus.WAITING) {
+            button("spotify.cancel", () -> {
+                spotify.cancelLogin();
+                rebuildNextTick = true;
+            });
+        }
+    }
+
+    private void logIn() {
+        spotify.logIn(url -> Util.getPlatform().openUri(url), () -> rebuildNextTick = true);
+        rebuildNextTick = true;
+    }
+
+    private Component spotifyStatusText() {
+        return switch (spotify.status()) {
+            case LOGGED_OUT -> label("spotify.status.logged_out");
+            case WAITING -> label("spotify.status.waiting");
+            case LOGGED_IN -> label("spotify.status.logged_in");
+            case FAILED -> Component.translatable("skysong.settings.spotify.status.failed", spotify.problem());
+        };
     }
 
     private Component playingText() {
@@ -271,6 +357,11 @@ public final class SkysongScreen extends Screen {
         addRow(key, new SettingSlider(rowWidth(), label(key), min, max, step, current, setter, format));
     }
 
+    private void wrappedText(String key) {
+        List<FormattedCharSequence> lines = font.split(label(key), rowWidth());
+        rows.add(new WrappedTextRow(lines, font.lineHeight + 1));
+    }
+
     private void color(String key, String current, Consumer<String> setter, Supplier<Integer> rgb) {
         EditBox field = new EditBox(font, 0, 0, COLOR_FIELD_WIDTH, ROW_HEIGHT, label(key));
         field.setMaxLength(7);
@@ -282,7 +373,7 @@ public final class SkysongScreen extends Screen {
         }));
         addTooltip(key, field);
         addRenderableWidget(field);
-        rows.add(new ColorRow(label(key), field, rgb));
+        rows.add(new FieldRow(label(key), field, COLOR_FIELD_WIDTH, rgb));
     }
 
     private void button(String key, Runnable action) {
@@ -362,9 +453,10 @@ public final class SkysongScreen extends Screen {
             if (row instanceof WidgetRow widgetRow) {
                 widgetRow.widget().setPosition(x, y);
                 widgetRow.widget().visible = inside;
-            } else if (row instanceof ColorRow colorRow) {
-                colorRow.field().setPosition(x + rowWidth() - COLOR_FIELD_WIDTH - SWATCH_SIZE - 4, y);
-                colorRow.field().visible = inside;
+            } else if (row instanceof FieldRow fieldRow) {
+                int swatchSpace = fieldRow.rgb() == null ? 0 : SWATCH_SIZE + 4;
+                fieldRow.field().setPosition(x + rowWidth() - fieldRow.fieldWidth() - swatchSpace, y);
+                fieldRow.field().visible = inside;
             }
             y += row.height() + ROW_GAP;
         }
@@ -387,8 +479,8 @@ public final class SkysongScreen extends Screen {
             rebuildWidgets();
         }
         for (Row row : rows) {
-            if (row instanceof ColorRow colorRow) {
-                colorRow.field().tick();
+            if (row instanceof FieldRow fieldRow) {
+                fieldRow.field().tick();
             }
         }
     }
@@ -418,12 +510,21 @@ public final class SkysongScreen extends Screen {
         int y = CONTENT_TOP - (int) Math.round(scroll);
         for (Row row : rows) {
             boolean inside = y >= CONTENT_TOP && y + row.height() <= contentBottom();
-            if (inside) {
+            if (row instanceof WrappedTextRow wrapped) {
+                // Long texts can be taller than the panel, so each line is shown on its own.
+                int lineY = y;
+                for (FormattedCharSequence line : wrapped.lines()) {
+                    if (lineY >= CONTENT_TOP && lineY + wrapped.lineHeight() <= contentBottom()) {
+                        graphics.drawString(font, line, x, lineY, TEXT_COLOR);
+                    }
+                    lineY += wrapped.lineHeight();
+                }
+            } else if (inside) {
                 if (row instanceof HeaderRow header) {
                     graphics.drawString(font, header.text(), x, y + 4, HEADER_COLOR);
                 } else if (row instanceof TextRow text) {
                     graphics.drawString(font, fit(text.text().get(), rowWidth()), x, y + 2, TEXT_COLOR);
-                } else if (row instanceof ColorRow color) {
+                } else if (row instanceof FieldRow color && color.rgb() != null) {
                     graphics.drawString(font, color.label(), x, y + 6, HINT_COLOR);
                     int swatchX = x + rowWidth() - SWATCH_SIZE;
                     int swatchY = y + (ROW_HEIGHT - SWATCH_SIZE) / 2;

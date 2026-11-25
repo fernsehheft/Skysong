@@ -32,6 +32,9 @@ public final class SkysongConfig {
     /** Where these settings are saved. Not part of the file itself. */
     private transient Path file;
 
+    /** Where Skysong finds out what's playing. */
+    public MusicSource musicSource = MusicSource.AUTO;
+
     /** Play the built-in demo song instead of listening to the music player. */
     public boolean demoSong = false;
     /** Show the lyrics in the world at all. */
@@ -133,6 +136,9 @@ public final class SkysongConfig {
         textColor = validColor(textColor, DEFAULT_TEXT_COLOR);
         highlightColor = validColor(highlightColor, DEFAULT_HIGHLIGHT_COLOR);
         offsetMs = Math.max(-5000, Math.min(5000, offsetMs));
+        if (musicSource == null) {
+            musicSource = MusicSource.AUTO;
+        }
         if (karaokeStyle == null) {
             karaokeStyle = KaraokeStyle.PILL;
         }

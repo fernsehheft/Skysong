@@ -41,6 +41,7 @@ Everything is saved in `.minecraft/config/skysong/settings.json`, which you can 
 | `titleIntro` | Show the song title when a new song starts | `true` |
 | `cinematicBars`, `cinematicBarSize` | Black bars while music plays, and their height as a share of the screen | `false`, `0.09` |
 | `hudWhenHidden` | Keep the karaoke bar, title intro and bars when the HUD is hidden with F1 | `true` |
+| `musicSource` | `AUTO` (Spotify when logged in, else the system player), `SPOTIFY` or `SYSTEM` | `AUTO` |
 | `demoSong` | Play a built-in demo song instead of your music, to try the looks | `false` |
 
 ## Where the music comes from
@@ -72,6 +73,22 @@ The mod jar ends up in `build/libs/`. To start a development client:
 | 1.20.1    | Fabric | in development |
 
 Other versions follow once 1.20.1 is complete.
+
+### Spotify (optional)
+
+Logging in to Spotify also works when the music plays on another device, like your phone,
+and lets you play, pause, skip and change the volume from the game (Spotify only allows
+that with Premium). Spotify wants every program that uses its Web API to have its own app,
+so you make a free one for yourself:
+
+1. Open the [Spotify developer dashboard](https://developer.spotify.com/dashboard) and create an app. Any name works.
+2. Tick **Web API** and add `http://127.0.0.1:18652/callback` as **Redirect URI**.
+3. Copy the app's **Client ID** into Skysong's settings (Music tab) and press **Log in**.
+
+Only a login token is saved, in `.minecraft/config/skysong/spotify.json`. Never your password.
+
+The music control keys (play/pause, next, previous, volume) have no key by default; set them
+in Minecraft's Controls under Skysong.
 
 ## Where the lyrics come from
 
