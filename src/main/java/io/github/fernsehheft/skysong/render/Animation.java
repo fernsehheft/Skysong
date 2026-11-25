@@ -7,5 +7,15 @@ public enum Animation {
     /** Every word fades in at the moment it's sung. */
     FADE,
     /** The line rises into place and floats up when the next one comes. */
-    RISE
+    RISE,
+    /** The words gently bob up and down, one after the other. */
+    WAVE,
+    /** The words are typed out letter by letter. */
+    TYPEWRITER,
+    /** Every word flickers in as scrambled characters before it settles. */
+    GLITCH,
+    /** Every word drops in from above and bounces into place. */
+    DROP,
+    /** Every word starts big and shrinks into place. */
+    ZOOM
 }

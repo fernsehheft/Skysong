@@ -3,6 +3,7 @@
   "package": "io.github.fernsehheft.skysong.mixin",
   "compatibilityLevel": "JAVA_17",
   "client": [
+    "BeatZoomMixin",
     "GameRendererMixin"
   ],
   "injectors": {

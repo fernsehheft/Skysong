@@ -14,10 +14,14 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
 
 import java.util.List;
 import java.util.Random;
@@ -33,6 +37,24 @@ public final class WorldLyricsRenderer {
     private static final int MAX_ROW_WIDTH = 180;
     private static final int ROW_GAP = 3;
     private static final double MAX_SCATTER_DEGREES = 30;
+    /**
+     * Lines in the sky are far away and high up, like a title over the landscape. Their size
+     * already grows with the distance, so only a little extra is added: a full line then
+     * takes up about as much of the view as one straight ahead.
+     */
+    private static final double SKY_DISTANCE = 22;
+    private static final double SKY_HEIGHT = 5;
+    private static final float SKY_SIZE = 1.15f;
+
+    private static final long MS_PER_TYPED_LETTER = 40;
+    private static final long GLITCH_MS = 180;
+    private static final String GLITCH_CHARACTERS = "#@%&*?!<>/\\=~";
+    private static final int DEPTH_LAYERS = 4;
+    private static final float DEPTH_STEP = 0.35f;
+    private static final float GLOW_ALPHA = 0.3f;
+    private static final float[][] GLOW_OFFSETS = {{-0.8f, 0}, {0.8f, 0}, {0, -0.8f}, {0, 0.8f}};
+    /** Sparks only for words sung within this long, not for ones that were over before the line showed up. */
+    private static final long SPARKLE_WINDOW_MS = 300;
 
     private static final long APPEAR_MS = 300;
     private static final long LEAVE_MS = 450;
@@ -58,6 +80,8 @@ public final class WorldLyricsRenderer {
         final float pixelSize;
         final long visibleUntil;
         long leftAt;
+        /** How many of the words have already had their sparks. */
+        int sparkedWords;
 
         ShownLine(LyricLine line, List<LineLayout.PlacedWord> words, Vec3 position, float pixelSize, long visibleUntil) {
             this.line = line;
@@ -138,6 +162,13 @@ public final class WorldLyricsRenderer {
         Vec3 eye = context.camera().getPosition();
         Vec3 position = placeLine(context.camera(), context.world());
         float pixelSize = (float) (PIXEL_SIZE * config.size * eye.distanceTo(position) / REFERENCE_DISTANCE);
+        if (config.placement == Placement.SKY) {
+            pixelSize *= SKY_SIZE;
+        }
+        // Only for a line that starts now, not when joining in the middle of one.
+        if (config.beatZoom && time - line.startMs() < APPEAR_MS) {
+            BeatZoom.kick();
+        }
         current = new ShownLine(line, placed, position, pixelSize, Math.min(end, lastWord + LINGER_MS));
     }
 
@@ -157,7 +188,10 @@ public final class WorldLyricsRenderer {
         double yaw = camera.getYRot();
         double distance = config.distance;
         double height = 0.2;
-        if (config.placement == Placement.SCATTERED) {
+        if (config.placement == Placement.SKY) {
+            distance = SKY_DISTANCE;
+            height = SKY_HEIGHT;
+        } else if (config.placement == Placement.SCATTERED) {
             // Stay well inside the default field of view, so no line ends up half off screen.
             yaw += (random.nextDouble() * 2 - 1) * MAX_SCATTER_DEGREES;
             distance *= 0.85 + random.nextDouble() * 0.4;
@@ -202,6 +236,16 @@ public final class WorldLyricsRenderer {
         return eye.add(direction.scale(Math.max(0.6, toWall - 0.3)));
     }
 
+    /** How one word looks in one frame. */
+    private static final class WordLook {
+        String text;
+        int color;
+        float alpha;
+        float scale = 1;
+        float offsetX;
+        float offsetY;
+    }
+
     private void draw(PoseStack pose, MultiBufferSource buffers, Font font, Camera camera, ShownLine shown, long time) {
         float appear = Easing.easeOut(Easing.progress(time - shown.line.startMs(), APPEAR_MS));
         float leave = shown == leaving ? Easing.easeOut(Easing.progress(time - shown.leftAt, LEAVE_MS)) : 0;
@@ -224,50 +268,209 @@ public final class WorldLyricsRenderer {
         pose.mulPose(camera.rotation());
         pose.scale(-shown.pixelSize, -shown.pixelSize, shown.pixelSize);
 
-        for (LineLayout.PlacedWord placed : shown.words) {
+        WordLook look = new WordLook();
+        for (int i = 0; i < shown.words.size(); i++) {
+            LineLayout.PlacedWord placed = shown.words.get(i);
             long sinceSung = time - placed.word().startMs();
-            float alpha = lineAlpha;
-            float scale = 1;
-            float offsetY = lineOffsetY;
-            int color;
-            switch (config.animation) {
-                case KARAOKE -> {
-                    float sung = Easing.progress(sinceSung, 120);
-                    color = Easing.lerpColor(config.textRgb(), config.highlightRgb(), sung);
-                    alpha *= UNSUNG_ALPHA + (1 - UNSUNG_ALPHA) * sung;
-                    if (sinceSung >= 0) {
-                        scale += 0.15f * Easing.bump(Easing.progress(sinceSung, 220));
-                    }
-                }
-                case FADE -> {
-                    float in = Easing.easeOut(Easing.progress(sinceSung, 250));
-                    alpha *= in;
-                    offsetY += (1 - in) * 4;
-                    // Flash in the highlight colour, then settle on the normal one.
-                    color = Easing.lerpColor(config.highlightRgb(), config.textRgb(), Easing.progress(sinceSung - 200, 500));
-                }
-                case RISE -> color = Easing.lerpColor(config.textRgb(), config.highlightRgb(), Easing.progress(sinceSung, 150));
-                default -> throw new IllegalStateException("Unknown animation " + config.animation);
+            look.text = placed.word().text();
+            look.alpha = lineAlpha;
+            look.scale = 1;
+            look.offsetX = 0;
+            look.offsetY = lineOffsetY;
+            if (animate(look, i, sinceSung, time)) {
+                drawWord(pose, buffers, font, placed, look);
             }
-            drawWord(pose, buffers, font, placed, color, alpha, scale, offsetY);
         }
         pose.popPose();
+
+        if (shown != leaving && config.sparkles) {
+            sparkle(camera, shown, time);
+        }
     }
 
-    private static void drawWord(PoseStack pose, MultiBufferSource buffers, Font font, LineLayout.PlacedWord placed,
-                                 int color, float alpha, float scale, float offsetY) {
+    /**
+     * Works out how a word looks for the chosen animation.
+     *
+     * @return false if the word isn't visible at all right now
+     */
+    private boolean animate(WordLook look, int index, long sinceSung, long time) {
+        int text = config.textRgb();
+        int highlight = config.highlightRgb();
+        switch (config.animation) {
+            case KARAOKE -> {
+                float sung = Easing.progress(sinceSung, 120);
+                look.color = Easing.lerpColor(text, highlight, sung);
+                look.alpha *= UNSUNG_ALPHA + (1 - UNSUNG_ALPHA) * sung;
+                if (sinceSung >= 0) {
+                    look.scale += 0.15f * Easing.bump(Easing.progress(sinceSung, 220));
+                }
+            }
+            case FADE -> {
+                float in = Easing.easeOut(Easing.progress(sinceSung, 250));
+                look.alpha *= in;
+                look.offsetY += (1 - in) * 4;
+                // Flash in the highlight colour, then settle on the normal one.
+                look.color = Easing.lerpColor(highlight, text, Easing.progress(sinceSung - 200, 500));
+            }
+            case RISE -> look.color = Easing.lerpColor(text, highlight, Easing.progress(sinceSung, 150));
+            case WAVE -> {
+                look.color = Easing.lerpColor(text, highlight, Easing.progress(sinceSung, 150));
+                look.offsetY += (float) Math.sin(time / 1000.0 * 4 + index * 0.8) * 1.5f;
+            }
+            case TYPEWRITER -> {
+                if (sinceSung < 0) {
+                    return false;
+                }
+                int letters = look.text.length();
+                int shownLetters = (int) Math.ceil(letters * Easing.progress(sinceSung, letters * MS_PER_TYPED_LETTER));
+                look.text = look.text.substring(0, Math.max(1, shownLetters));
+                look.color = Easing.lerpColor(highlight, text, Easing.progress(sinceSung - letters * MS_PER_TYPED_LETTER, 600));
+            }
+            case GLITCH -> {
+                if (sinceSung < 0) {
+                    return false;
+                }
+                if (sinceSung < GLITCH_MS) {
+                    // A different jumble every few frames, the same within them.
+                    long seed = time / 40 * 31 + index;
+                    look.text = scramble(look.text, seed);
+                    look.color = (seed & 1) == 0 ? highlight : text;
+                    look.offsetX = (hash(seed) - 0.5f) * 3;
+                } else {
+                    look.color = Easing.lerpColor(highlight, text, Easing.progress(sinceSung - GLITCH_MS, 600));
+                }
+            }
+            case DROP -> {
+                if (sinceSung < 0) {
+                    return false;
+                }
+                float fall = Easing.progress(sinceSung, 420);
+                look.offsetY -= (1 - Easing.bounceOut(fall)) * 18;
+                look.alpha *= Math.min(1, fall * 3);
+                look.color = Easing.lerpColor(highlight, text, Easing.progress(sinceSung - 400, 600));
+            }
+            case ZOOM -> {
+                if (sinceSung < 0) {
+                    return false;
+                }
+                float in = Easing.easeOut(Easing.progress(sinceSung, 260));
+                look.scale = 1 + (1 - in) * 1.4f;
+                look.alpha *= in;
+                look.color = Easing.lerpColor(highlight, text, Easing.progress(sinceSung - 200, 600));
+            }
+            default -> throw new IllegalStateException("Unknown animation " + config.animation);
+        }
+        return true;
+    }
+
+    private void drawWord(PoseStack pose, MultiBufferSource buffers, Font font, LineLayout.PlacedWord placed, WordLook look) {
         // Minecraft draws text with an alpha below 4 as fully opaque, so skip those.
-        int alphaByte = Math.round(alpha * 255);
+        int alphaByte = Math.round(look.alpha * 255);
         if (alphaByte < 5) {
             return;
         }
         float halfWidth = placed.width() / 2f;
         float halfHeight = font.lineHeight / 2f;
         pose.pushPose();
-        pose.translate(placed.x() + halfWidth, placed.y() + halfHeight + offsetY, 0);
-        pose.scale(scale, scale, 1);
-        font.drawInBatch(placed.word().text(), -halfWidth, -halfHeight, (alphaByte << 24) | color, true,
-                pose.last().pose(), buffers, Font.DisplayMode.NORMAL, 0, LightTexture.FULL_BRIGHT);
+        pose.translate(placed.x() + halfWidth + look.offsetX, placed.y() + halfHeight + look.offsetY, 0);
+        pose.scale(look.scale, look.scale, 1);
+
+        if (config.depth3d) {
+            // Darker copies stacked away from the viewer give the letters some thickness.
+            // After the flip in draw(), positive z in text space points away from the camera.
+            int side = withAlpha(darken(look.color, 0.45f), alphaByte);
+            for (int layer = DEPTH_LAYERS; layer >= 1; layer--) {
+                pose.pushPose();
+                pose.translate(layer * DEPTH_STEP, layer * DEPTH_STEP, layer * DEPTH_STEP);
+                text(font, look.text, -halfWidth, -halfHeight, side, false, pose, buffers);
+                pose.popPose();
+            }
+        }
+        if (config.glow) {
+            // A halo of see-through copies around the word, in the highlight colour.
+            int halo = withAlpha(config.highlightRgb(), Math.max(5, Math.round(alphaByte * GLOW_ALPHA)));
+            for (float[] offset : GLOW_OFFSETS) {
+                text(font, look.text, -halfWidth + offset[0], -halfHeight + offset[1], halo, false, pose, buffers);
+            }
+        }
+        text(font, look.text, -halfWidth, -halfHeight, withAlpha(look.color, alphaByte), !config.depth3d, pose, buffers);
         pose.popPose();
+    }
+
+    private static void text(Font font, String text, float x, float y, int argb, boolean shadow,
+                             PoseStack pose, MultiBufferSource buffers) {
+        font.drawInBatch(text, x, y, argb, shadow, pose.last().pose(), buffers, Font.DisplayMode.NORMAL, 0,
+                LightTexture.FULL_BRIGHT);
+    }
+
+    /** Sends a few sparks off every word at the moment it's sung. */
+    private void sparkle(Camera camera, ShownLine shown, long time) {
+        ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) {
+            return;
+        }
+        Font font = Minecraft.getInstance().font;
+        Vec3 camPos = camera.getPosition();
+        while (shown.sparkedWords < shown.words.size()) {
+            LineLayout.PlacedWord placed = shown.words.get(shown.sparkedWords);
+            long sinceSung = time - placed.word().startMs();
+            if (sinceSung < 0) {
+                break;
+            }
+            shown.sparkedWords++;
+            // Words that were sung before the line showed up (after seeking) stay quiet.
+            if (sinceSung > SPARKLE_WINDOW_MS) {
+                continue;
+            }
+
+            // The same transformation the text is drawn with, but starting from world space.
+            Vector3f center = new Matrix4f()
+                    .translation((float) (shown.position.x - camPos.x), (float) (shown.position.y - camPos.y),
+                            (float) (shown.position.z - camPos.z))
+                    .rotate(camera.rotation())
+                    .scale(-shown.pixelSize, -shown.pixelSize, shown.pixelSize)
+                    .transformPosition(new Vector3f(placed.x() + placed.width() / 2f, placed.y() + font.lineHeight / 2f, 0));
+            double x = camPos.x + center.x();
+            double y = camPos.y + center.y();
+            double z = camPos.z + center.z();
+
+            int rgb = config.highlightRgb();
+            DustParticleOptions dust = new DustParticleOptions(
+                    new Vector3f(((rgb >> 16) & 0xFF) / 255f, ((rgb >> 8) & 0xFF) / 255f, (rgb & 0xFF) / 255f), 0.7f);
+            double spread = placed.width() * shown.pixelSize / 2;
+            for (int i = 0; i < 4; i++) {
+                level.addParticle(dust, x + (random.nextDouble() - 0.5) * spread * 2,
+                        y + (random.nextDouble() - 0.3) * 0.25, z + (random.nextDouble() - 0.5) * spread, 0, 0, 0);
+            }
+            level.addParticle(ParticleTypes.END_ROD, x, y, z,
+                    (random.nextDouble() - 0.5) * 0.04, 0.02 + random.nextDouble() * 0.03, (random.nextDouble() - 0.5) * 0.04);
+        }
+    }
+
+    private static String scramble(String word, long seed) {
+        StringBuilder jumbled = new StringBuilder(word.length());
+        for (int i = 0; i < word.length(); i++) {
+            int pick = (int) (hash(seed * 7 + i) * GLITCH_CHARACTERS.length());
+            jumbled.append(GLITCH_CHARACTERS.charAt(Math.min(pick, GLITCH_CHARACTERS.length() - 1)));
+        }
+        return jumbled.toString();
+    }
+
+    /** A number between 0 and 1 that looks random but is always the same for the same seed. */
+    private static float hash(long seed) {
+        long mixed = seed * 0x9E3779B97F4A7C15L;
+        mixed ^= mixed >>> 29;
+        return (mixed >>> 40) / (float) (1L << 24);
+    }
+
+    private static int withAlpha(int rgb, int alphaByte) {
+        return (alphaByte << 24) | (rgb & 0xFFFFFF);
+    }
+
+    private static int darken(int rgb, float factor) {
+        int r = Math.round(((rgb >> 16) & 0xFF) * factor);
+        int g = Math.round(((rgb >> 8) & 0xFF) * factor);
+        int b = Math.round((rgb & 0xFF) * factor);
+        return (r << 16) | (g << 8) | b;
     }
 }

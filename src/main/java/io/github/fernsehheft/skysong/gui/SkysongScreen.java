@@ -221,6 +221,18 @@ public final class SkysongScreen extends Screen {
             config.karaokeStyle = value;
             updatePresetButton();
         });
+
+        header("effects");
+        toggle("glow", config.glow, value -> {
+            config.glow = value;
+            updatePresetButton();
+        });
+        toggle("depth3d", config.depth3d, value -> {
+            config.depth3d = value;
+            updatePresetButton();
+        });
+        toggle("sparkles", config.sparkles, value -> config.sparkles = value);
+        toggle("beat_zoom", config.beatZoom, value -> config.beatZoom = value);
     }
 
     private void buildScreenTab() {

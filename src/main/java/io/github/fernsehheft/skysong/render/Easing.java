@@ -18,6 +18,23 @@ public final class Easing {
         return 1 - inverse * inverse * inverse;
     }
 
+    /** Overshoots the end a few times with smaller and smaller bounces, like something dropped. */
+    public static float bounceOut(float t) {
+        final float n = 7.5625f;
+        final float d = 2.75f;
+        if (t < 1 / d) {
+            return n * t * t;
+        } else if (t < 2 / d) {
+            t -= 1.5f / d;
+            return n * t * t + 0.75f;
+        } else if (t < 2.5f / d) {
+            t -= 2.25f / d;
+            return n * t * t + 0.9375f;
+        }
+        t -= 2.625f / d;
+        return n * t * t + 0.984375f;
+    }
+
     /** Goes up to 1 and back to 0, for a short "pop". */
     public static float bump(float t) {
         return (float) Math.sin(Math.PI * t);

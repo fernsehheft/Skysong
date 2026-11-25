@@ -49,6 +49,15 @@ public final class SkysongConfig {
     public String textColor = DEFAULT_TEXT_COLOR;
     /** Colour of the word being sung. */
     public String highlightColor = DEFAULT_HIGHLIGHT_COLOR;
+    /** A soft glow in the highlight colour around the words in the world. */
+    public boolean glow = false;
+    /** Gives the words in the world some thickness, like letters cut out of a block. */
+    public boolean depth3d = false;
+    /** Little sparks fly off every word as it's sung. */
+    public boolean sparkles = true;
+    /** The view zooms in a tiny bit when a new line starts, like a cut in a music video. */
+    public boolean beatZoom = true;
+
     /** Shows the lyrics this many milliseconds earlier (or later, if negative). */
     public long offsetMs = 0;
 

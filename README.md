@@ -6,6 +6,12 @@ right inside your Minecraft world.
 > Early development. Skysong finds out which song is playing, loads its lyrics and shows
 > them floating in front of you, word by word.
 
+## In the world
+
+- **Eight animations**: karaoke, fade, rise, wave, typewriter, glitch, drop and zoom
+- **Three placements**: straight ahead, scattered around you, or big in the sky
+- **Effects**: glow, 3D letters, sparks flying off every sung word, and a small beat zoom when a new line starts
+
 ## On screen
 
 - **Karaoke bar**: the current line as a subtitle, words lighting up as they're sung, with the next line below
@@ -30,8 +36,9 @@ Everything is saved in `.minecraft/config/skysong/settings.json`, which you can 
 | Setting | What it does | Default |
 |---|---|---|
 | `worldLyrics` | Show the lyrics in the world (also on a key you can bind in Controls) | `true` |
-| `placement` | `AHEAD` (in front of you) or `SCATTERED` (a new spot around you for every line) | `AHEAD` |
-| `animation` | `KARAOKE`, `FADE` or `RISE` | `KARAOKE` |
+| `placement` | `AHEAD` (in front of you), `SCATTERED` (a new spot around you for every line) or `SKY` | `AHEAD` |
+| `animation` | `KARAOKE`, `FADE`, `RISE`, `WAVE`, `TYPEWRITER`, `GLITCH`, `DROP` or `ZOOM` | `KARAOKE` |
+| `glow`, `depth3d`, `sparkles`, `beatZoom` | Effects for the lyrics in the world | `false`, `false`, `true`, `true` |
 | `distance` | How far away the lyrics are, in blocks (1.5 to 12) | `4.0` |
 | `size` | Text size, 1.0 is normal (0.25 to 4) | `1.0` |
 | `textColor`, `highlightColor` | Colours like `"#FFD966"` | `#FFFFFF`, `#FFD966` |
