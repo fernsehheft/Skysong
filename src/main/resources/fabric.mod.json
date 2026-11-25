@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "skysong",
+  "version": "${version}",
+  "name": "Skysong",
+  "description": "Synced lyrics of the song you're listening to, right there in your Minecraft world.",
+  "authors": ["fernsehheft"],
+  "contact": {
+    "sources": "https://github.com/fernsehheft/Skysong",
+    "issues": "https://github.com/fernsehheft/Skysong/issues"
+  },
+  "environment": "client",
+  "entrypoints": {
+    "client": ["io.github.fernsehheft.skysong.SkysongClient"]
+  },
+  "depends": {
+    "fabricloader": ">=0.15.0",
+    "minecraft": "~1.20",
+    "java": ">=17",
+    "fabric-api": "*"
+  }
+}
