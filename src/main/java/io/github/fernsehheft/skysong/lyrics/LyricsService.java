@@ -1,6 +1,7 @@
 package io.github.fernsehheft.skysong.lyrics;
 
 import io.github.fernsehheft.skysong.Skysong;
+import io.github.fernsehheft.skysong.media.DemoSource;
 import io.github.fernsehheft.skysong.media.NowPlaying;
 
 import java.io.IOException;
@@ -70,6 +71,10 @@ public final class LyricsService {
     private void lookUp(NowPlaying track) {
         // When songs are skipped quickly, lookups for songs that are long gone pile up.
         if (!isCurrent(track)) {
+            return;
+        }
+        if (DemoSource.isDemo(track)) {
+            publish(track, LyricsText.synced(DemoSource.LYRICS), "the demo song");
             return;
         }
         TrackQuery query = TrackQuery.of(track);

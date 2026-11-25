@@ -1,4 +1,5 @@
 {
   "key.category.skysong": "Skysong",
-  "key.skysong.toggle_overlay": "Aktuellen Song anzeigen"
+  "key.skysong.toggle_overlay": "Aktuellen Song anzeigen",
+  "key.skysong.toggle_lyrics": "Lyrics in der Welt anzeigen"
 }

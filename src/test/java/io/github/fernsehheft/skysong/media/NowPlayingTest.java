@@ -1,5 +1,6 @@
 package io.github.fernsehheft.skysong.media;
 
+import io.github.fernsehheft.skysong.lyrics.LrcParser;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -32,5 +33,13 @@ class NowPlayingTest {
     void sameTrackIgnoresPosition() {
         assertTrue(track(0, 1, true).isSameTrack(track(500, 1, false)));
         assertFalse(track(0, 1, true).isSameTrack(null));
+    }
+
+    @Test
+    void demoSongHasLyricsThatParse() {
+        NowPlaying demo = new DemoSource().poll().orElseThrow();
+        assertTrue(DemoSource.isDemo(demo));
+        assertTrue(demo.positionMs() < demo.durationMs());
+        assertFalse(LrcParser.parse(DemoSource.LYRICS).isEmpty());
     }
 }

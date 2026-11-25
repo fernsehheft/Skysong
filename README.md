@@ -3,9 +3,24 @@
 A client-side Fabric mod that shows the synced lyrics of whatever you're listening to
 right inside your Minecraft world.
 
-> Early development. Right now Skysong finds out which song is playing and loads its
-> lyrics. Press **K** in game to see the song and the current line in the corner of the
-> screen. Showing the lyrics in the world comes next.
+> Early development. Skysong finds out which song is playing, loads its lyrics and shows
+> them floating in front of you, word by word. Press **K** for a small readout of the song
+> in the corner of the screen.
+
+## Settings
+
+Until there's a settings screen, the settings live in `.minecraft/config/skysong/settings.json`:
+
+| Setting | What it does | Default |
+|---|---|---|
+| `worldLyrics` | Show the lyrics in the world (also on a key you can bind in Controls) | `true` |
+| `placement` | `AHEAD` (in front of you) or `SCATTERED` (a new spot around you for every line) | `AHEAD` |
+| `animation` | `KARAOKE`, `FADE` or `RISE` | `KARAOKE` |
+| `distance` | How far away the lyrics are, in blocks (1.5 to 12) | `4.0` |
+| `size` | Text size, 1.0 is normal (0.25 to 4) | `1.0` |
+| `textColor`, `highlightColor` | Colours like `"#FFD966"` | `#FFFFFF`, `#FFD966` |
+| `offsetMs` | Show the lyrics this many milliseconds earlier (negative: later) | `0` |
+| `demoSong` | Play a built-in demo song instead of your music, to try the looks (needs a restart) | `false` |
 
 ## Where the music comes from
 
