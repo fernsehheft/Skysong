@@ -2,6 +2,10 @@ package io.github.fernsehheft.skysong;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import io.github.fernsehheft.skysong.hud.NowPlayingOverlay;
+import io.github.fernsehheft.skysong.lyrics.LocalLyricsFolder;
+import io.github.fernsehheft.skysong.lyrics.LrclibClient;
+import io.github.fernsehheft.skysong.lyrics.LyricsCache;
+import io.github.fernsehheft.skysong.lyrics.LyricsService;
 import io.github.fernsehheft.skysong.media.MediaSources;
 import io.github.fernsehheft.skysong.media.NowPlayingTracker;
 import net.fabricmc.api.ClientModInitializer;
@@ -25,10 +29,22 @@ public class SkysongClient implements ClientModInitializer {
                     System.getProperty("os.name"));
             return;
         }
-        tracker.start();
-        ClientLifecycleEvents.CLIENT_STOPPING.register(client -> tracker.stop());
 
-        NowPlayingOverlay overlay = new NowPlayingOverlay(tracker);
+        LocalLyricsFolder localLyrics = new LocalLyricsFolder(Skysong.dataDirectory().resolve("lyrics"));
+        localLyrics.prepare();
+        LyricsService lyrics = new LyricsService(
+                localLyrics,
+                new LyricsCache(Skysong.dataDirectory().resolve("cache")),
+                new LrclibClient("Skysong/" + Skysong.version() + " (https://github.com/fernsehheft/Skysong)"));
+        tracker.onTrackChange(lyrics::onTrackChanged);
+
+        tracker.start();
+        ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
+            tracker.stop();
+            lyrics.stop();
+        });
+
+        NowPlayingOverlay overlay = new NowPlayingOverlay(tracker, lyrics);
         HudRenderCallback.EVENT.register((graphics, tickDelta) -> overlay.render(graphics));
 
         KeyMapping toggleOverlay = KeyBindingHelper.registerKeyBinding(new KeyMapping(

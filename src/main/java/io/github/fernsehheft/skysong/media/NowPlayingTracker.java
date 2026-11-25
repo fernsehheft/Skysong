@@ -3,11 +3,14 @@ package io.github.fernsehheft.skysong.media;
 import io.github.fernsehheft.skysong.Skysong;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 /**
  * Keeps asking a {@link MediaSource} what's playing, on its own thread, so the game
@@ -23,11 +26,20 @@ public final class NowPlayingTracker {
         return thread;
     });
 
+    private final List<Consumer<NowPlaying>> trackListeners = new CopyOnWriteArrayList<>();
     private volatile NowPlaying current;
     private String lastError;
 
     public NowPlayingTracker(MediaSource source) {
         this.source = Objects.requireNonNull(source);
+    }
+
+    /**
+     * Called on the media thread whenever a different song starts, or with null when
+     * the music stops altogether. Pausing and seeking don't count as a change.
+     */
+    public void onTrackChange(Consumer<NowPlaying> listener) {
+        trackListeners.add(listener);
     }
 
     public void start() {
@@ -61,9 +73,22 @@ public final class NowPlayingTracker {
             next = null;
         }
 
-        if (next != null && !next.isSameTrack(current)) {
+        NowPlaying previous = current;
+        current = next;
+        boolean changed = next == null ? previous != null : !next.isSameTrack(previous);
+        if (!changed) {
+            return;
+        }
+        if (next != null) {
             Skysong.LOGGER.info("Now playing: {} - {} ({})", next.artist(), next.title(), next.player());
         }
-        current = next;
+        for (Consumer<NowPlaying> listener : trackListeners) {
+            try {
+                listener.accept(next);
+            } catch (RuntimeException e) {
+                // Don't let one listener stop the polling for good.
+                Skysong.LOGGER.error("Track change listener failed", e);
+            }
+        }
     }
 }

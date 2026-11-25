@@ -3,8 +3,9 @@
 A client-side Fabric mod that shows the synced lyrics of whatever you're listening to
 right inside your Minecraft world.
 
-> Early development. Right now Skysong can tell which song is playing; press **K** in game
-> to see it in the corner of the screen. Lyrics come next.
+> Early development. Right now Skysong finds out which song is playing and loads its
+> lyrics. Press **K** in game to see the song and the current line in the corner of the
+> screen. Showing the lyrics in the world comes next.
 
 ## Where the music comes from
 
@@ -35,6 +36,13 @@ The mod jar ends up in `build/libs/`. To start a development client:
 | 1.20.1    | Fabric | in development |
 
 Other versions follow once 1.20.1 is complete.
+
+## Where the lyrics come from
+
+1. **Your own files** in `.minecraft/config/skysong/lyrics/`. Name them `Artist - Title.lrc`
+   (with timestamps) or `Title.txt` (plain text). A README in that folder explains the format.
+2. **[LRCLIB](https://lrclib.net)**, a free and open lyrics database. Downloaded lyrics are
+   kept in `.minecraft/config/skysong/cache/`, so songs you've heard before work offline.
 
 ## License
 
