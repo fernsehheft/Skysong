@@ -5,6 +5,7 @@ out/
 
 # Loom
 run/
+logs/
 remappedSrc/
 
 # IDEs
