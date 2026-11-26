@@ -10,6 +10,7 @@ import io.github.fernsehheft.skysong.lyrics.Lyrics;
 import io.github.fernsehheft.skysong.lyrics.LyricsPlayback;
 import io.github.fernsehheft.skysong.lyrics.SongStructure;
 import io.github.fernsehheft.skysong.lyrics.TrackQuery;
+import io.github.fernsehheft.skysong.showcase.Showcase;
 import io.github.fernsehheft.skysong.lyrics.TimedWord;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.minecraft.client.Camera;
@@ -291,6 +292,11 @@ public final class WorldLyricsRenderer {
     private Vec3 placeLine(Camera camera, ClientLevel level) {
         if (config.placement == Placement.SKY) {
             return skyPlace(camera, level);
+        }
+        Vec3 showcaseSpot = Showcase.get().lyricsSpot();
+        if (showcaseSpot != null) {
+            // The showcase camera moves round the player, so the lyrics stay with the player.
+            return showcaseSpot;
         }
         double yaw = camera.getYRot();
         double distance = config.distance;

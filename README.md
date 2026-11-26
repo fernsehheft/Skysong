@@ -23,6 +23,14 @@ right inside your Minecraft world.
 - **Title intro**: the song's name, big, when a new song starts
 - **Cinematic bars**: black bars at the top and bottom while music plays (off by default)
 
+### Showcase camera
+
+**Start showcase** (in the Screen tab, or on a key you can set in Controls) turns the camera
+into a music video crew: it films you from changing angles, cuts to a new shot on every line,
+and turns slowly round you at the end of the song, with the lyrics floating above your head.
+The game HUD is hidden, so it's ready to record. You stand still and only your own view
+changes; the showcase ends when you take damage or press the key again.
+
 Click **Move HUD** in the settings to drag the karaoke bar and the card around and resize
 them with the mouse wheel. Hide the game HUD with **F1** and the karaoke bar, title intro and
 cinematic bars stay, which is handy for recording videos.

@@ -166,5 +166,11 @@
   "skysong.settings.font.elegant": "Elegant",
   "skysong.settings.font.retro": "Retro",
   "skysong.settings.font.mono": "Mono",
-  "skysong.settings.font.tooltip": "Die Schrift der Lyrics in der Welt, der Karaoke-Leiste und des Titel-Intros."
+  "skysong.settings.font.tooltip": "Die Schrift der Lyrics in der Welt, der Karaoke-Leiste und des Titel-Intros.",
+  "key.skysong.showcase": "Showcase-Kamera",
+  "skysong.settings.showcase": "Showcase starten",
+  "skysong.settings.showcase.tooltip": "Eine Kamera filmt dich wie in einem Musikvideo: bei jeder Zeile eine neue Einstellung, zum Songende ein Schwenk um dich herum. Du bleibst stehen, nur deine eigene Sicht ändert sich. Endet, wenn du Schaden nimmst, oder mit der Showcase-Taste (unter Steuerung belegen).",
+  "skysong.showcase.started": "Showcase: Die Kamera filmt dich. Showcase-Taste zum Beenden.",
+  "skysong.showcase.stopped": "Showcase beendet",
+  "skysong.showcase.hurt": "Showcase beendet: Du hast Schaden genommen"
 }

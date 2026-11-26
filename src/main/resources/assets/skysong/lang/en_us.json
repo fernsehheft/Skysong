@@ -166,5 +166,11 @@
   "skysong.settings.font.elegant": "Elegant",
   "skysong.settings.font.retro": "Retro",
   "skysong.settings.font.mono": "Mono",
-  "skysong.settings.font.tooltip": "The font of the lyrics in the world, the karaoke bar and the title intro."
+  "skysong.settings.font.tooltip": "The font of the lyrics in the world, the karaoke bar and the title intro.",
+  "key.skysong.showcase": "Showcase camera",
+  "skysong.settings.showcase": "Start showcase",
+  "skysong.settings.showcase.tooltip": "A camera films you like a music video, cutting to a new shot on every line and turning round you at the end of the song. You stand still; only your own view changes. Stops when you take damage, or with the showcase key (set it in Controls).",
+  "skysong.showcase.started": "Showcase: the camera films you. Press the showcase key to stop.",
+  "skysong.showcase.stopped": "Showcase ended",
+  "skysong.showcase.hurt": "Showcase ended: you took damage"
 }

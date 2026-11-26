@@ -4,7 +4,9 @@
   "compatibilityLevel": "JAVA_17",
   "client": [
     "BeatZoomMixin",
-    "GameRendererMixin"
+    "CameraMixin",
+    "GameRendererMixin",
+    "KeyboardInputMixin"
   ],
   "injectors": {
     "defaultRequire": 1

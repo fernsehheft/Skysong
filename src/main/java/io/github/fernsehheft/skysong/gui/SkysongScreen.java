@@ -12,6 +12,7 @@ import io.github.fernsehheft.skysong.lyrics.LyricsPlayback;
 import io.github.fernsehheft.skysong.render.Animation;
 import io.github.fernsehheft.skysong.render.LyricFont;
 import io.github.fernsehheft.skysong.render.Placement;
+import io.github.fernsehheft.skysong.showcase.Showcase;
 import io.github.fernsehheft.skysong.spotify.Spotify;
 import io.github.fernsehheft.skysong.spotify.SpotifyAccount;
 import io.github.fernsehheft.skysong.spotify.SpotifyApi;
@@ -258,6 +259,12 @@ public final class SkysongScreen extends Screen {
         slider("cinematic_bar_size", 0.02, 0.25, 0.01, config.cinematicBarSize,
                 value -> config.cinematicBarSize = value, SkysongScreen::percent);
         toggle("hud_when_hidden", config.hudWhenHidden, value -> config.hudWhenHidden = value);
+        if (minecraft.level != null) {
+            button("showcase", () -> {
+                onClose();
+                Showcase.get().start();
+            });
+        }
     }
 
     private void buildMusicTab() {

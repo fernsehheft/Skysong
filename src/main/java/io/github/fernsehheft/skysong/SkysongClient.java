@@ -16,6 +16,7 @@ import io.github.fernsehheft.skysong.media.SwitchableSource;
 import io.github.fernsehheft.skysong.spotify.MusicControls;
 import io.github.fernsehheft.skysong.spotify.Spotify;
 import io.github.fernsehheft.skysong.render.WorldLyricsRenderer;
+import io.github.fernsehheft.skysong.showcase.Showcase;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -91,11 +92,13 @@ public class SkysongClient implements ClientModInitializer {
         WorldRenderEvents.LAST.register(worldLyrics::render);
 
         hud = new SkysongHud(playback, config);
+        Showcase.get().setPlayback(playback);
         HudRenderCallback.EVENT.register((graphics, tickDelta) -> hud.render(graphics));
 
         KeyMapping openSettings = KeyBindingHelper.registerKeyBinding(new KeyMapping(
                 "key.skysong.settings", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_K, KEY_CATEGORY));
         KeyMapping toggleLyrics = unboundKey("key.skysong.toggle_lyrics");
+        KeyMapping showcase = unboundKey("key.skysong.showcase");
         KeyMapping lyricsEarlier = unboundKey("key.skysong.lyrics_earlier");
         KeyMapping lyricsLater = unboundKey("key.skysong.lyrics_later");
         Map<KeyMapping, MusicControls.Action> controlKeys = Map.of(
@@ -111,6 +114,10 @@ public class SkysongClient implements ClientModInitializer {
             while (toggleLyrics.consumeClick()) {
                 config.worldLyrics = !config.worldLyrics;
                 config.save();
+            }
+            Showcase.get().tick();
+            while (showcase.consumeClick()) {
+                Showcase.get().toggle();
             }
             while (lyricsEarlier.consumeClick()) {
                 nudgeLyrics(playback, SONG_OFFSET_STEP_MS);
