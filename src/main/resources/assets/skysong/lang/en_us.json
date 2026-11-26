@@ -174,5 +174,13 @@
   "skysong.showcase.stopped": "Showcase ended",
   "skysong.showcase.hurt": "Showcase ended: you took damage",
   "skysong.settings.listen_to_music": "Move with the beat",
-  "skysong.settings.listen_to_music.tooltip": "Listens to the sound your computer plays to find the beat: lyrics pulse on it, drops zoom the view, and the showcase cuts on the beat. The sound is only analysed on the spot, never saved or sent anywhere."
+  "skysong.settings.listen_to_music.tooltip": "Listens to the sound your computer plays to find the beat: lyrics pulse on it, drops zoom the view, and the showcase cuts on the beat. The sound is only analysed on the spot, never saved or sent anywhere.",
+  "skysong.hud.debug_log": "Skysong log",
+  "skysong.hud.debug_log.empty": "Nothing logged yet",
+  "key.skysong.debug_log": "Show the debug log",
+  "skysong.settings.debug_log": "Debug log on screen",
+  "skysong.settings.debug_log.tooltip": "Shows what Skysong does, live, in a panel you can move with \"Move HUD\": songs found, where the lyrics come from, logins, problems.",
+  "skysong.settings.copy_debug_log": "Copy debug log",
+  "skysong.settings.copy_debug_log.tooltip": "Copies the last 300 log entries, to paste them wherever you need them, e.g. in a bug report.",
+  "skysong.settings.copy_debug_log.copied": "Copied!"
 }

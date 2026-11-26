@@ -1,5 +1,6 @@
 package io.github.fernsehheft.skysong.showcase;
 
+import io.github.fernsehheft.skysong.Skysong;
 import io.github.fernsehheft.skysong.audio.AudioListener;
 import io.github.fernsehheft.skysong.audio.AudioState;
 import io.github.fernsehheft.skysong.lyrics.LyricsPlayback;
@@ -118,6 +119,7 @@ public final class Showcase {
         shotAngle = 180;
         cutTo(Shot.ORBIT, System.currentTimeMillis());
         minecraft.gui.setOverlayMessage(Component.translatable("skysong.showcase.started"), false);
+        Skysong.LOGGER.info("Showcase started");
     }
 
     public void stop(Component reason) {
@@ -128,6 +130,7 @@ public final class Showcase {
         Minecraft minecraft = Minecraft.getInstance();
         minecraft.options.hideGui = hudWasHidden;
         minecraft.gui.setOverlayMessage(reason, false);
+        Skysong.LOGGER.info("Showcase ended: {}", reason.getString());
     }
 
     /** Called every client tick: ends the showcase when the player is hurt or leaves the world. */

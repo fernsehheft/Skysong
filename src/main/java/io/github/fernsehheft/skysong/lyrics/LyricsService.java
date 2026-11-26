@@ -100,6 +100,7 @@ public final class LyricsService {
                 cache.putFound(query, downloaded.get());
                 publish(track, downloaded.get(), "LRCLIB");
             } else {
+                Skysong.LOGGER.info("No lyrics found for {} - {}", track.artist(), track.title());
                 cache.putMissing(query);
                 setIfCurrent(track, new State(track, Status.NOT_FOUND, null, null));
             }

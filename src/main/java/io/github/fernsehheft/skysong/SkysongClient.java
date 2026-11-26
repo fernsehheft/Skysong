@@ -3,6 +3,7 @@ package io.github.fernsehheft.skysong;
 import com.mojang.blaze3d.platform.InputConstants;
 import io.github.fernsehheft.skysong.audio.AudioListener;
 import io.github.fernsehheft.skysong.config.SkysongConfig;
+import io.github.fernsehheft.skysong.debug.DebugLogAppender;
 import io.github.fernsehheft.skysong.gui.SkysongScreen;
 import io.github.fernsehheft.skysong.hud.SkysongHud;
 import io.github.fernsehheft.skysong.lyrics.LocalLyricsFolder;
@@ -56,6 +57,8 @@ public class SkysongClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+        // First, so the on-screen debug log has everything from the start.
+        DebugLogAppender.install();
         config = SkysongConfig.load(Skysong.dataDirectory().resolve("settings.json"));
         lyricsFolder = Skysong.dataDirectory().resolve("lyrics");
 
@@ -103,6 +106,7 @@ public class SkysongClient implements ClientModInitializer {
                 "key.skysong.settings", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_K, KEY_CATEGORY));
         KeyMapping toggleLyrics = unboundKey("key.skysong.toggle_lyrics");
         KeyMapping showcase = unboundKey("key.skysong.showcase");
+        KeyMapping debugLog = unboundKey("key.skysong.debug_log");
         KeyMapping lyricsEarlier = unboundKey("key.skysong.lyrics_earlier");
         KeyMapping lyricsLater = unboundKey("key.skysong.lyrics_later");
         Map<KeyMapping, MusicControls.Action> controlKeys = Map.of(
@@ -122,6 +126,10 @@ public class SkysongClient implements ClientModInitializer {
             Showcase.get().tick();
             // Only listen while there's music; nothing to find a beat in otherwise.
             audio.update(config.listenToMusic && tracker.current().isPresent());
+            while (debugLog.consumeClick()) {
+                config.debugLog = !config.debugLog;
+                config.save();
+            }
             while (showcase.consumeClick()) {
                 Showcase.get().toggle();
             }

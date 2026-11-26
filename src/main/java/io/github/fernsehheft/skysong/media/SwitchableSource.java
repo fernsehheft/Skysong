@@ -1,5 +1,6 @@
 package io.github.fernsehheft.skysong.media;
 
+import io.github.fernsehheft.skysong.Skysong;
 import io.github.fernsehheft.skysong.config.MusicSource;
 import io.github.fernsehheft.skysong.config.SkysongConfig;
 import io.github.fernsehheft.skysong.spotify.Spotify;
@@ -22,6 +23,7 @@ public final class SwitchableSource implements MediaSource {
     private final Spotify spotify;
     private final SkysongConfig config;
     private final DemoSource demo = new DemoSource();
+    private Active lastActive;
 
     /**
      * @param system the music player of this OS, or null if we can't read it here
@@ -65,6 +67,10 @@ public final class SwitchableSource implements MediaSource {
     @Override
     public Optional<NowPlaying> poll() throws IOException {
         Active active = active();
+        if (active != lastActive) {
+            lastActive = active;
+            Skysong.LOGGER.info("Music now comes from: {}", name());
+        }
         if (active == Active.DEMO) {
             demo.restartIfStopped();
             return demo.poll();

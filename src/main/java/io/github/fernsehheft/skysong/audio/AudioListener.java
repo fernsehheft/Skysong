@@ -31,6 +31,8 @@ public final class AudioListener {
     private int earlyExits;
     private boolean gaveUp;
     private Path windowsScript;
+    /** The tempo last written to the log, to note when it changes. */
+    private float loggedBpm;
 
     /** What the music sounds like now; {@link AudioState#NONE} while not listening. */
     public AudioState state() {
@@ -51,7 +53,11 @@ public final class AudioListener {
             stop();
             return;
         }
-        if (gaveUp || (helper != null && helper.isAlive())) {
+        if (helper != null && helper.isAlive()) {
+            noteTempo();
+            return;
+        }
+        if (gaveUp) {
             return;
         }
         if (helper != null) {
@@ -65,6 +71,14 @@ public final class AudioListener {
             }
         }
         start();
+    }
+
+    private void noteTempo() {
+        AudioState state = analyzer.state();
+        if (!state.silent() && state.bpm() > 0 && Math.abs(state.bpm() - loggedBpm) >= 4) {
+            loggedBpm = state.bpm();
+            Skysong.LOGGER.info("Tempo: {} BPM", Math.round(state.bpm()));
+        }
     }
 
     public synchronized void stop() {

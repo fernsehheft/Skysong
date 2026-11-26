@@ -68,6 +68,7 @@ Everything is saved in `.minecraft/config/skysong/settings.json`, which you can 
 | `musicSource` | `AUTO` (Spotify when logged in, else the system player), `SPOTIFY` or `SYSTEM` | `AUTO` |
 | `estimateWordTiming` | Guess when each word is sung if the lyrics only time whole lines | `false` |
 | `listenToMusic` | Listen to the computer's sound to find the beat | `true` |
+| `debugLog` | Show Skysong's log in a panel on screen | `false` |
 | `debugOverlay` | Show timing details in the top left | `false` |
 | `demoSong` | Play a built-in demo song instead of your music, to try the looks | `false` |
 
@@ -148,6 +149,14 @@ There are also keys for it (*Lyrics earlier* / *Lyrics later*), unbound by defau
 Remixes, sped up and slowed versions get the lyrics of the original song, stretched to the
 version's length. For sped up and slowed versions that fits; for other remixes it's a guess,
 so the card says "timing estimated".
+
+## Debug log
+
+Turn on **Debug log on screen** in the Music tab to see, live in the game, what Skysong is
+doing: which song it found, where the lyrics come from, which LRCLIB entry it picked, logins,
+the tempo and anything that went wrong. The panel sits top right and can be moved and resized
+with **Move HUD**. **Copy debug log** copies the last 300 entries, handy for bug reports.
+Everything also goes to the normal game log.
 
 ## Where the lyrics come from
 

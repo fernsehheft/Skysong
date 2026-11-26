@@ -52,6 +52,11 @@ public final class NowPlayingTracker {
         source.close();
     }
 
+    private static String minutesAndSeconds(long millis) {
+        long seconds = Math.max(0, millis) / 1000;
+        return String.format("%d:%02d", seconds / 60, seconds % 60);
+    }
+
     public Optional<NowPlaying> current() {
         return Optional.ofNullable(current);
     }
@@ -77,7 +82,14 @@ public final class NowPlayingTracker {
         current = next;
         boolean changed = next == null ? previous != null : !next.isSameTrack(previous);
         if (!changed) {
+            if (next != null && previous != null && next.playing() != previous.playing()) {
+                Skysong.LOGGER.info(next.playing() ? "Playing again at {}" : "Paused at {}",
+                        minutesAndSeconds(next.positionMs()));
+            }
             return;
+        }
+        if (next == null) {
+            Skysong.LOGGER.info("Nothing is playing any more");
         }
         if (next != null) {
             Skysong.LOGGER.info("Now playing: {} - {} ({})", next.artist(), next.title(), next.player());

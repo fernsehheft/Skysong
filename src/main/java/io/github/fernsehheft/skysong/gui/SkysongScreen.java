@@ -4,6 +4,7 @@ import io.github.fernsehheft.skysong.Skysong;
 import io.github.fernsehheft.skysong.SkysongClient;
 import io.github.fernsehheft.skysong.audio.AudioListener;
 import io.github.fernsehheft.skysong.config.ColorMode;
+import io.github.fernsehheft.skysong.debug.DebugLog;
 import io.github.fernsehheft.skysong.config.LookPreset;
 import io.github.fernsehheft.skysong.config.MusicSource;
 import io.github.fernsehheft.skysong.config.SkysongConfig;
@@ -279,6 +280,12 @@ public final class SkysongScreen extends Screen {
         }
         toggle("estimate_word_timing", config.estimateWordTiming, value -> config.estimateWordTiming = value);
         toggle("debug_overlay", config.debugOverlay, value -> config.debugOverlay = value);
+        toggle("debug_log", config.debugLog, value -> config.debugLog = value);
+        Button copyLog = Button.builder(label("copy_debug_log"), b -> {
+            minecraft.keyboardHandler.setClipboard(DebugLog.get().asText());
+            b.setMessage(label("copy_debug_log.copied"));
+        }).size(rowWidth(), ROW_HEIGHT).build();
+        addRow("copy_debug_log", copyLog);
         slider("offset", -2000, 2000, 50, config.offsetMs, value -> config.offsetMs = Math.round(value),
                 value -> Component.translatable("skysong.settings.unit.ms", String.format(Locale.ROOT, "%+d", Math.round(value))));
         button("open_lyrics_folder", () -> Util.getPlatform().openFile(lyricsFolder.toFile()));

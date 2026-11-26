@@ -174,5 +174,13 @@
   "skysong.showcase.stopped": "Showcase beendet",
   "skysong.showcase.hurt": "Showcase beendet: Du hast Schaden genommen",
   "skysong.settings.listen_to_music": "Im Takt bewegen",
-  "skysong.settings.listen_to_music.tooltip": "Hört mit, was dein Computer abspielt, um den Beat zu finden: Lyrics pulsieren im Takt, Drops zoomen die Sicht, und der Showcase schneidet auf dem Beat. Der Ton wird nur vor Ort ausgewertet, nie gespeichert oder verschickt."
+  "skysong.settings.listen_to_music.tooltip": "Hört mit, was dein Computer abspielt, um den Beat zu finden: Lyrics pulsieren im Takt, Drops zoomen die Sicht, und der Showcase schneidet auf dem Beat. Der Ton wird nur vor Ort ausgewertet, nie gespeichert oder verschickt.",
+  "skysong.hud.debug_log": "Skysong-Log",
+  "skysong.hud.debug_log.empty": "Noch nichts protokolliert",
+  "key.skysong.debug_log": "Debug-Log anzeigen",
+  "skysong.settings.debug_log": "Debug-Log im Spiel",
+  "skysong.settings.debug_log.tooltip": "Zeigt live, was Skysong macht, in einem Panel, das du mit \"HUD verschieben\" bewegen kannst: gefundene Songs, woher die Lyrics kommen, Logins, Probleme.",
+  "skysong.settings.copy_debug_log": "Debug-Log kopieren",
+  "skysong.settings.copy_debug_log.tooltip": "Kopiert die letzten 300 Log-Einträge, zum Einfügen wo du sie brauchst, z. B. in einem Fehlerbericht.",
+  "skysong.settings.copy_debug_log.copied": "Kopiert!"
 }

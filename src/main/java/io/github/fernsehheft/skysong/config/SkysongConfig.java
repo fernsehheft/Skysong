@@ -82,6 +82,11 @@ public final class SkysongConfig {
      * is only analysed on the spot, never saved or sent anywhere.
      */
     public boolean listenToMusic = true;
+    /** Shows what Skysong writes to its log in a panel on screen. */
+    public boolean debugLog = false;
+    public double debugLogX = DEFAULT_DEBUG_LOG_X;
+    public double debugLogY = DEFAULT_DEBUG_LOG_Y;
+    public double debugLogScale = 1.0;
     /** Shows the timing details on screen, to find out why lyrics are early or late. */
     public boolean debugOverlay = false;
 
@@ -126,6 +131,8 @@ public final class SkysongConfig {
     public static final double DEFAULT_KARAOKE_Y = 0.22;
     public static final double DEFAULT_CARD_X = 0.86;
     public static final double DEFAULT_CARD_Y = 0.09;
+    public static final double DEFAULT_DEBUG_LOG_X = 0.84;
+    public static final double DEFAULT_DEBUG_LOG_Y = 0.34;
 
     public static SkysongConfig load(Path file) {
         SkysongConfig config = null;
@@ -194,6 +201,9 @@ public final class SkysongConfig {
         cardY = round(clamp(cardY, 0, 1), 3);
         cardScale = round(clamp(cardScale, MIN_HUD_SCALE, MAX_HUD_SCALE), 2);
         cinematicBarSize = clamp(cinematicBarSize, 0.02, 0.25);
+        debugLogX = round(clamp(debugLogX, 0, 1), 3);
+        debugLogY = round(clamp(debugLogY, 0, 1), 3);
+        debugLogScale = round(clamp(debugLogScale, MIN_HUD_SCALE, MAX_HUD_SCALE), 2);
     }
 
     /** Puts every setting back to its default, keeping this object so everything using it sees the change. */
