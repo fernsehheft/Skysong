@@ -1,5 +1,7 @@
 package io.github.fernsehheft.skysong.showcase;
 
+import io.github.fernsehheft.skysong.audio.AudioListener;
+import io.github.fernsehheft.skysong.audio.AudioState;
 import io.github.fernsehheft.skysong.lyrics.LyricsPlayback;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -27,6 +29,8 @@ public final class Showcase {
     /** Keeps the camera this far in front of walls it would otherwise end up in. */
     private static final double WALL_MARGIN = 0.3;
     private static final double LYRICS_ABOVE_HEAD = 1.4;
+    /** How long a cut may wait for the next beat. */
+    private static final long MAX_CUT_WAIT_MS = 500;
 
     private enum Shot {
         /** Circles the player slowly. */
@@ -48,6 +52,10 @@ public final class Showcase {
 
     private final Random random = new Random();
     private LyricsPlayback playback;
+    private AudioListener audio;
+    /** A cut that waits for the next beat, so it lands on it; 0 when none is waiting. */
+    private long cutWantedAt;
+    private long beatsSeen;
 
     private boolean active;
     private boolean hudWasHidden;
@@ -73,6 +81,10 @@ public final class Showcase {
 
     public void setPlayback(LyricsPlayback playback) {
         this.playback = playback;
+    }
+
+    public void setAudio(AudioListener audio) {
+        this.audio = audio;
     }
 
     public boolean active() {
@@ -167,11 +179,24 @@ public final class Showcase {
         }
         finaleStartAngle = null;
 
+        AudioState sound = audio == null ? AudioState.NONE : audio.state();
+        boolean beats = sound.running() && !sound.silent() && sound.bpm() > 0;
+        boolean onBeat = beats && sound.beatCount() != beatsSeen;
+        beatsSeen = sound.beatCount();
+
         int line = moment == null || moment.lyrics() == null ? -1 : moment.lineIndex();
         boolean newLine = line >= 0 && line != lastLineIndex
                 && !moment.lyrics().lines().get(line).isBreak();
-        boolean timeUp = line < 0 && now - shotStartedAt > SHOT_MS_WITHOUT_LYRICS;
-        if (newLine || timeUp) {
+        // Without lyrics: a new shot every eight beats, or every few seconds without a beat.
+        long shotLength = beats ? Math.round(8 * 60_000 / sound.bpm()) : SHOT_MS_WITHOUT_LYRICS;
+        boolean timeUp = line < 0 && now - shotStartedAt > shotLength;
+        if ((newLine || timeUp) && cutWantedAt == 0) {
+            cutWantedAt = now;
+        }
+        // With a beat to go by, the cut waits for it, but never long.
+        boolean cutNow = cutWantedAt != 0 && (!beats || onBeat || now - cutWantedAt > MAX_CUT_WAIT_MS);
+        if (cutNow) {
+            cutWantedAt = 0;
             Shot next = Shot.values()[random.nextInt(Shot.values().length)];
             if (next == shot) {
                 next = Shot.values()[(next.ordinal() + 1) % Shot.values().length];

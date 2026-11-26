@@ -15,6 +15,7 @@ right inside your Minecraft world.
 - **Effects**: glow, 3D letters, sparks flying off every sung word, and a small beat zoom when a new line starts
 - **Colours**: one colour, a flowing gradient between two colours, or a rainbow; the word being sung lights up in its own colour
 - Pause the music and the lyrics fade away; play on and they come back at the right line
+- **Moving with the beat** (Windows and Linux): Skysong listens to what your computer plays and finds the beat, so the lyrics pulse on it, drops zoom the view and the showcase cuts on the beat
 
 ## On screen
 
@@ -66,6 +67,7 @@ Everything is saved in `.minecraft/config/skysong/settings.json`, which you can 
 | `hudWhenHidden` | Keep the karaoke bar, title intro and bars when the HUD is hidden with F1 | `true` |
 | `musicSource` | `AUTO` (Spotify when logged in, else the system player), `SPOTIFY` or `SYSTEM` | `AUTO` |
 | `estimateWordTiming` | Guess when each word is sung if the lyrics only time whole lines | `false` |
+| `listenToMusic` | Listen to the computer's sound to find the beat | `true` |
 | `debugOverlay` | Show timing details in the top left | `false` |
 | `demoSong` | Play a built-in demo song instead of your music, to try the looks | `false` |
 
@@ -115,6 +117,18 @@ Only a login token is saved, in `.minecraft/config/skysong/spotify.json`. Never 
 The music control keys (play/pause, next, previous, volume) have no key by default; set them
 in Minecraft's Controls under Skysong.
 
+## Listening to the beat
+
+To find the beat, Skysong listens to the sound your computer plays: on Windows with a small
+PowerShell helper that records the speakers (WASAPI loopback), on Linux with `parec`
+(PulseAudio or PipeWire). The sound is only analysed on the spot to find the beat, the tempo
+and how loud the music is. It's never saved or sent anywhere. It can be switched off in the
+Music tab ("Move with the beat"). macOS can't record the speakers without extra software,
+so there the lyrics don't move with the beat.
+
+This doesn't make the lyrics themselves line up with the singing: telling which word is being
+sung would need speech recognition, which is far too heavy for a mod.
+
 ## When the timing is off
 
 Turn on **Timing details** in the Music tab to see where the player says the song is, which
@@ -145,7 +159,7 @@ so the card says "timing estimated".
 ## Credits
 
 The fonts come from [Google Fonts](https://fonts.google.com) under the SIL Open Font License,
-which is included next to them in `assets/skysong/font/licenses`: Poppins, Bebas Neue,
+which is included with them in `licenses/fonts`: Poppins, Bebas Neue,
 Pacifico, DM Serif Display, Press Start 2P and Space Mono.
 
 ## License

@@ -8,7 +8,7 @@ import net.minecraft.util.FormattedCharSequence;
 
 /**
  * The fonts the lyrics can be written in. Apart from Minecraft's own, they come with the
- * mod under the SIL Open Font License (see {@code assets/skysong/font/licenses}); letters a
+ * mod under the SIL Open Font License (see {@code licenses/fonts} in the jar); letters a
  * font lacks are taken from Minecraft's font.
  */
 public enum LyricFont {

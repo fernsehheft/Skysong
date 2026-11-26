@@ -2,6 +2,8 @@ package io.github.fernsehheft.skysong.render;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
+import io.github.fernsehheft.skysong.audio.AudioListener;
+import io.github.fernsehheft.skysong.audio.AudioState;
 import io.github.fernsehheft.skysong.config.ColorMode;
 import io.github.fernsehheft.skysong.config.SkysongConfig;
 import io.github.fernsehheft.skysong.gui.PreviewArea;
@@ -67,6 +69,8 @@ public final class WorldLyricsRenderer {
     private static final float BACKING_SCALE = 0.8f;
     private static final float BACKING_ALPHA = 0.6f;
     private static final float HELD_GROWTH = 0.18f;
+    private static final float BEAT_PULSE = 0.07f;
+    private static final double BEAT_PULSE_FADE_MS = 110;
     private static final long GLITCH_MS = 180;
     private static final String GLITCH_CHARACTERS = "#@%&*?!<>/\\=~";
     private static final int DEPTH_LAYERS = 4;
@@ -89,6 +93,10 @@ public final class WorldLyricsRenderer {
 
     private final LyricsPlayback playback;
     private final SkysongConfig config;
+    private final AudioListener audio;
+    /** How much bigger everything is right on a beat, fading within a split second. */
+    private float beatPulse;
+    private long lastDropSeen = Long.MIN_VALUE;
     private final Random random = new Random();
 
     private Lyrics shownLyrics;
@@ -135,9 +143,10 @@ public final class WorldLyricsRenderer {
         }
     }
 
-    public WorldLyricsRenderer(LyricsPlayback playback, SkysongConfig config) {
+    public WorldLyricsRenderer(LyricsPlayback playback, SkysongConfig config, AudioListener audio) {
         this.playback = playback;
         this.config = config;
+        this.audio = audio;
     }
 
     public void render(WorldRenderContext context) {
@@ -150,6 +159,8 @@ public final class WorldLyricsRenderer {
         if (!followPlayState(moment.track().playing())) {
             return;
         }
+
+        followBeat();
 
         Lyrics song = moment.lyrics();
         long time = moment.timeMs();
@@ -186,6 +197,21 @@ public final class WorldLyricsRenderer {
             RenderSystem.enableDepthTest();
         } else {
             buffers.endBatch();
+        }
+    }
+
+    /** Pulses with the beat and zooms on drops, when the music is being listened to. */
+    private void followBeat() {
+        AudioState sound = audio.state();
+        long now = System.nanoTime();
+        beatPulse = sound.running() && !sound.silent()
+                ? (float) Math.exp(-sound.msSinceBeat(now) / BEAT_PULSE_FADE_MS)
+                : 0;
+        if (sound.running() && sound.lastDropNanos() != lastDropSeen) {
+            lastDropSeen = sound.lastDropNanos();
+            if (config.beatZoom && sound.msSinceDrop(now) < 300) {
+                BeatZoom.kick();
+            }
         }
     }
 
@@ -407,6 +433,7 @@ public final class WorldLyricsRenderer {
             int base = LyricColors.base(config, i, shown.words.size(), System.currentTimeMillis());
             if (animate(look, i, base, sinceSung, time)) {
                 react(look, shown, i, sinceSung);
+                look.scale *= 1 + BEAT_PULSE * beatPulse;
                 drawWord(pose, buffers, font, placed, look);
             }
         }

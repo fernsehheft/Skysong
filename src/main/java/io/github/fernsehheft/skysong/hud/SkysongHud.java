@@ -1,5 +1,6 @@
 package io.github.fernsehheft.skysong.hud;
 
+import io.github.fernsehheft.skysong.audio.AudioListener;
 import io.github.fernsehheft.skysong.config.SkysongConfig;
 import io.github.fernsehheft.skysong.gui.PreviewArea;
 import io.github.fernsehheft.skysong.lyrics.LyricsPlayback;
@@ -21,14 +22,14 @@ public final class SkysongHud {
     private long lastFrame = System.nanoTime();
     private static final float PAUSE_FADE_SECONDS = 0.4f;
 
-    public SkysongHud(LyricsPlayback playback, SkysongConfig config) {
+    public SkysongHud(LyricsPlayback playback, SkysongConfig config, AudioListener audio) {
         this.playback = playback;
         this.config = config;
         this.cinematicBars = new CinematicBars(config);
         this.titleIntro = new TitleIntro(config);
         this.karaokeBar = new KaraokeBar(config);
         this.nowPlayingCard = new NowPlayingCard(config);
-        this.debugOverlay = new DebugOverlay(config, playback);
+        this.debugOverlay = new DebugOverlay(config, playback, audio);
     }
 
     /** Drawn together with the normal game HUD. */

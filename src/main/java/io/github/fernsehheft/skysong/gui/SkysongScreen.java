@@ -2,6 +2,7 @@ package io.github.fernsehheft.skysong.gui;
 
 import io.github.fernsehheft.skysong.Skysong;
 import io.github.fernsehheft.skysong.SkysongClient;
+import io.github.fernsehheft.skysong.audio.AudioListener;
 import io.github.fernsehheft.skysong.config.ColorMode;
 import io.github.fernsehheft.skysong.config.LookPreset;
 import io.github.fernsehheft.skysong.config.MusicSource;
@@ -273,6 +274,9 @@ public final class SkysongScreen extends Screen {
         rows.add(new TextRow(this::lyricsText));
         choice("music_source", MusicSource.values(), config.musicSource, value -> config.musicSource = value);
         toggle("demo_song", config.demoSong, value -> config.demoSong = value);
+        if (AudioListener.supported()) {
+            toggle("listen_to_music", config.listenToMusic, value -> config.listenToMusic = value);
+        }
         toggle("estimate_word_timing", config.estimateWordTiming, value -> config.estimateWordTiming = value);
         toggle("debug_overlay", config.debugOverlay, value -> config.debugOverlay = value);
         slider("offset", -2000, 2000, 50, config.offsetMs, value -> config.offsetMs = Math.round(value),

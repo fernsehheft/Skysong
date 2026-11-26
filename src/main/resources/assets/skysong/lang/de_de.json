@@ -172,5 +172,7 @@
   "skysong.settings.showcase.tooltip": "Eine Kamera filmt dich wie in einem Musikvideo: bei jeder Zeile eine neue Einstellung, zum Songende ein Schwenk um dich herum. Du bleibst stehen, nur deine eigene Sicht ändert sich. Endet, wenn du Schaden nimmst, oder mit der Showcase-Taste (unter Steuerung belegen).",
   "skysong.showcase.started": "Showcase: Die Kamera filmt dich. Showcase-Taste zum Beenden.",
   "skysong.showcase.stopped": "Showcase beendet",
-  "skysong.showcase.hurt": "Showcase beendet: Du hast Schaden genommen"
+  "skysong.showcase.hurt": "Showcase beendet: Du hast Schaden genommen",
+  "skysong.settings.listen_to_music": "Im Takt bewegen",
+  "skysong.settings.listen_to_music.tooltip": "Hört mit, was dein Computer abspielt, um den Beat zu finden: Lyrics pulsieren im Takt, Drops zoomen die Sicht, und der Showcase schneidet auf dem Beat. Der Ton wird nur vor Ort ausgewertet, nie gespeichert oder verschickt."
 }

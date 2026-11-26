@@ -172,5 +172,7 @@
   "skysong.settings.showcase.tooltip": "A camera films you like a music video, cutting to a new shot on every line and turning round you at the end of the song. You stand still; only your own view changes. Stops when you take damage, or with the showcase key (set it in Controls).",
   "skysong.showcase.started": "Showcase: the camera films you. Press the showcase key to stop.",
   "skysong.showcase.stopped": "Showcase ended",
-  "skysong.showcase.hurt": "Showcase ended: you took damage"
+  "skysong.showcase.hurt": "Showcase ended: you took damage",
+  "skysong.settings.listen_to_music": "Move with the beat",
+  "skysong.settings.listen_to_music.tooltip": "Listens to the sound your computer plays to find the beat: lyrics pulse on it, drops zoom the view, and the showcase cuts on the beat. The sound is only analysed on the spot, never saved or sent anywhere."
 }

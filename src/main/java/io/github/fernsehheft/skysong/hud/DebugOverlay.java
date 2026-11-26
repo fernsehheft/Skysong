@@ -1,5 +1,7 @@
 package io.github.fernsehheft.skysong.hud;
 
+import io.github.fernsehheft.skysong.audio.AudioListener;
+import io.github.fernsehheft.skysong.audio.AudioState;
 import io.github.fernsehheft.skysong.config.SkysongConfig;
 import io.github.fernsehheft.skysong.lyrics.LyricLine;
 import io.github.fernsehheft.skysong.lyrics.Lyrics;
@@ -24,10 +26,12 @@ final class DebugOverlay {
 
     private final SkysongConfig config;
     private final LyricsPlayback playback;
+    private final AudioListener audio;
 
-    DebugOverlay(SkysongConfig config, LyricsPlayback playback) {
+    DebugOverlay(SkysongConfig config, LyricsPlayback playback, AudioListener audio) {
         this.config = config;
         this.playback = playback;
+        this.audio = audio;
     }
 
     void render(GuiGraphics graphics, Font font, LyricsPlayback.Moment moment) {
@@ -51,6 +55,15 @@ final class DebugOverlay {
     private List<String> lines(LyricsPlayback.Moment moment) {
         List<String> lines = new ArrayList<>();
         lines.add("Skysong debug");
+        AudioState sound = audio.state();
+        if (!sound.running()) {
+            lines.add("Audio: not listening" + (config.listenToMusic ? "" : " (switched off)"));
+        } else if (sound.silent()) {
+            lines.add("Audio: listening, silence");
+        } else {
+            lines.add(String.format(Locale.ROOT, "Audio: %.0f BPM, level %.2f, last beat %d ms ago",
+                    sound.bpm(), sound.level(), Math.min(9999, sound.msSinceBeat(System.nanoTime()))));
+        }
         if (moment == null) {
             lines.add("Nothing is playing");
             return lines;

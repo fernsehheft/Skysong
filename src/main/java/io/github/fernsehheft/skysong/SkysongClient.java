@@ -1,6 +1,7 @@
 package io.github.fernsehheft.skysong;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import io.github.fernsehheft.skysong.audio.AudioListener;
 import io.github.fernsehheft.skysong.config.SkysongConfig;
 import io.github.fernsehheft.skysong.gui.SkysongScreen;
 import io.github.fernsehheft.skysong.hud.SkysongHud;
@@ -66,6 +67,7 @@ public class SkysongClient implements ClientModInitializer {
         spotify = new Spotify(Skysong.dataDirectory().resolve("spotify.json"));
         SwitchableSource source = new SwitchableSource(systemPlayer, spotify, config);
         NowPlayingTracker tracker = new NowPlayingTracker(source);
+        AudioListener audio = new AudioListener();
         MusicControls controls = new MusicControls(spotify,
                 () -> source.active() == SwitchableSource.Active.SPOTIFY,
                 SkysongClient::showControlResult);
@@ -84,15 +86,17 @@ public class SkysongClient implements ClientModInitializer {
             lyrics.stop();
             controls.stop();
             spotify.cancelLogin();
+            audio.stop();
         });
 
         LyricsPlayback playback = new LyricsPlayback(tracker, lyrics, config,
                 SongOffsets.load(Skysong.dataDirectory().resolve("song-offsets.json")));
-        WorldLyricsRenderer worldLyrics = new WorldLyricsRenderer(playback, config);
+        WorldLyricsRenderer worldLyrics = new WorldLyricsRenderer(playback, config, audio);
         WorldRenderEvents.LAST.register(worldLyrics::render);
 
-        hud = new SkysongHud(playback, config);
+        hud = new SkysongHud(playback, config, audio);
         Showcase.get().setPlayback(playback);
+        Showcase.get().setAudio(audio);
         HudRenderCallback.EVENT.register((graphics, tickDelta) -> hud.render(graphics));
 
         KeyMapping openSettings = KeyBindingHelper.registerKeyBinding(new KeyMapping(
@@ -116,6 +120,8 @@ public class SkysongClient implements ClientModInitializer {
                 config.save();
             }
             Showcase.get().tick();
+            // Only listen while there's music; nothing to find a beat in otherwise.
+            audio.update(config.listenToMusic && tracker.current().isPresent());
             while (showcase.consumeClick()) {
                 Showcase.get().toggle();
             }

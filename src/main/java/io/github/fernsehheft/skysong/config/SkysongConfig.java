@@ -77,6 +77,11 @@ public final class SkysongConfig {
      * sung, background vocals are smaller and held notes grow.
      */
     public boolean reactToSong = true;
+    /**
+     * Listen to the sound the computer plays to find the beat (Windows and Linux). The sound
+     * is only analysed on the spot, never saved or sent anywhere.
+     */
+    public boolean listenToMusic = true;
     /** Shows the timing details on screen, to find out why lyrics are early or late. */
     public boolean debugOverlay = false;
 
